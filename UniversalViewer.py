@@ -97,6 +97,7 @@ class UniversalViewer:#(MutableMap):
         self.title_template = ("UniversalViewer scale:{}  cb {}:{}", ("get_scale()", "get_cbrange()[0]", "get_cbrange()[1]" ))
         self.image_name_template = ("SC{}-V{}_{}_{}.png",("get_frame()","get_scale()","get_view()[0]","get_view()[1]", "get_view()[2]"))
         self.set_pal("pal")
+        self.__help = False
 #--------------------------------------------------------------
     def __setattr__(self,name,value):
         self.__dict__[name] = value
@@ -178,9 +179,16 @@ class UniversalViewer:#(MutableMap):
                     break
             glutPostRedisplay()
         return KeyHandler
-    def help(self, myobject=__module__):
+    def help(self, myobject=None):
         "Показать справку на обьект"
-        help(myobject)
+        self.__help = True
+        @threaded
+        def help_thread(self, myobject):
+            if myobject is None:
+                help(self)
+            self.com_thr = async_getline()
+            self.__help = False
+        help_thread(self,myobject)
     def set_pal(self, pal_name):
         self.tex = self.palettes[pal_name]
         self.cur_pal = pal_name
@@ -256,7 +264,7 @@ class UniversalViewer:#(MutableMap):
         if x<0: self.V.mouse_click(4,GLUT_DOWN,0,0)
         else: self.V.mouse_click(3,GLUT_DOWN,0,0)
     def idle(self):
-        if (not self.com_thr.is_alive()):
+        if (not self.__help and not self.com_thr.is_alive()):
             command = self.com_thr.result_queue.get()
             try:
                 self.execute(command)
@@ -265,7 +273,7 @@ class UniversalViewer:#(MutableMap):
             except:
                 print "Unexpected error:", sys.exc_info()[0]
                 exit()
-            self.com_thr = async_getline()
+            if (not self.__help and not self.com_thr.is_alive()): self.com_thr = async_getline()
         cur_time = time.time()
         for i, (name, last_time, interval, action) in enumerate(self.idle_actions):
             if cur_time-last_time>=interval:
