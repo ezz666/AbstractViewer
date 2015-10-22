@@ -202,7 +202,7 @@ Viewer::~Viewer(){
     //if (spr) delete spr;
     //free_BO();
     //glDeleteProgram(sprog);
-    exit(0);
+    //exit(0);
 }
 //--------------------------------------------------------------------------------
 glm::mat4 Viewer::calc_mvp(){

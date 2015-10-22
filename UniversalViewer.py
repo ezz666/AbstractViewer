@@ -11,6 +11,7 @@ from aivlib.vctf3 import *
 import time
 from async_input import *
 from viewer import *
+from string import Formatter
 
 KeysList = " `1234567890qwertyuiop[]asdfghjkl;'xcvbnm,,./~!@#$%^&*()_-+QWERTYUIOP{}ASDFGHJKL:\"|\\ZXCVBNM<>?"
 SpecialKeysList = [GLUT_KEY_F1, GLUT_KEY_F2, GLUT_KEY_F3,
@@ -63,7 +64,7 @@ DefaultKeyMapping = [ ("next()", " "), ("jump(-1)"," ", ["Shift"]),
 # add cutting surfaces
 
 
-class UniversalViewer:#(MutableMap):
+class UniversalViewer:
     def __init__(self, argv):
         self.V = Viewer()
         glutInit(argv)
@@ -71,12 +72,15 @@ class UniversalViewer:#(MutableMap):
         glutInitDisplayMode(GLUT_RGBA|GLUT_DOUBLE|GLUT_DEPTH)
         glutCreateWindow("viewer")
         self.V.GL_init()
+        #self.additional_names = {}
         self.spr = ShaderProg()
         self.palettes = {} # names for palettes?
         self.add_pal("pal", [1.,0.,0., 1.,.5,0., 1.,1.,0., 0.,1.,0., 0.,1.,1., 0.,0.,1., 1.,0.,1.])
         self.add_pal("rgb", [1.,0.,0.,0.,1.,0.,0.,0.,1.])
         # make it simple to create pal!!
         self.Axis = Axis()
+        self.rl_reader = rl_async_reader(os.path.expanduser("~/.UniversalViewer"))
+        #self.rl_reader.set_completer(self.__class__.__dict__)
         self.Axis.load_on_device()
         d ={}
         for k in SpecialKeysList:
@@ -92,23 +96,52 @@ class UniversalViewer:#(MutableMap):
         self.ax = True
         #self.cb_auto = True
         self.bb_auto = True
-        self.com_thr = async_getline()
+        self.__async_getline()
         self.idle_actions = []
-        self.title_template = ("UniversalViewer scale:{}  cb {}:{}", ("get_scale()", "get_cbrange()[0]", "get_cbrange()[1]" ))
-        self.image_name_template = ("SC{}-V{}_{}_{}.png",("get_frame()","get_scale()","get_view()[0]","get_view()[1]", "get_view()[2]"))
+        self.title_template = "UniversalViewer scale:{scale}"
+        self.image_name_template = "SC{scale}-V{view[0]}_{view[1]}_{view[2]}.png"
         self.set_pal("pal")
         self.__help = False
+        self.buffers = {}
+        self.buffer = None
+        self.namespace = {}
 #--------------------------------------------------------------
     def __setattr__(self,name,value):
         self.__dict__[name] = value
+    #def __getattr__(self, key):
+    #    if key in self.__dict__:
+    #        return self.__dict__[key]
+    #    else: return self.__class__.__dict__[key]
     def __setitem__(self, key, value):
-        self.__dict__[key] = value
+        if "set_"+key in self:
+            if isinstance(value, tuple) or isinstance(value, list):
+                getattr(self,"set_"+key)(*value)
+            elif isinstance(value, dict):
+                getattr(self,"set_"+key)(**value)
+            else: getattr(self,"set_"+key)(value)
+        else:
+            self.__dict__[key] = value
     def __getitem__(self, key):
         try:
             return getattr(self, key)
         except AttributeError:
-            raise KeyError(key)
+            try:
+                return getattr(self,"get_"+key)()
+            except AttributeError:
+                raise KeyError(key)
+    #def __iter__(self):
+    #    return iter(self.namespace)
+    #def __len__(self):
+    #    return len(self.namespace)
 
+    #        #raise KeyError(key)
+    def __contains__(self, key):
+        k_in_d = key in self.__dict__ or key in self.__class__.__dict__
+        gsk_in_d = "set_"+key in self.__dict__ and "get_"+key in self.__dict__
+        gsk_in_cd = "set_"+key in self.__class__.__dict__ and "get_"+key in self.__class__.__dict__
+        return k_in_d or gsk_in_d or gsk_in_cd
+    #def __delitem__(self,key):
+    #    del self[key]
     #def __getitem__(self, key): # getitem would evaluate it immideately, yes recursion is possible
     #    # is not usable for mouse methods
     #    arglist = get_arglist(self.params[key])
@@ -125,11 +158,12 @@ class UniversalViewer:#(MutableMap):
         if isinstance(string, str): exec(string,kwargs,self)
         else: exec(func2string(string), kwargs, self)
         glutPostRedisplay()
-    def evaluate(self, string, **kwargs):
+    def evaluate(self, mystring, **kwargs):
         #kwargs["__builtins__"]=__builtins__
         kwargs.update(globals())
-        if isinstance(string, str): return eval(string,kwargs,self)
-        else: return eval(func2string(string), kwargs, self)
+        print mystring
+        if isinstance(mystring, str): return eval(mystring,kwargs,self)
+        else: return eval(func2string(mystring), kwargs, self)
     def set_key(self, func, key, modificators = [], key_pressed = [], up = False):
         if(( key not in list(KeysList))  and (key not in SpecialKeysList)): print "Unhandled key {}".format(key); return
         KeysDict = (self.KeyDown, self.KeyUp, self.SpecialKeyDown, self.SpecialKeyUp)[ int(key in SpecialKeysList) *2 + int(up)]
@@ -144,12 +178,14 @@ class UniversalViewer:#(MutableMap):
         pal = float_array(nlen)
         for i, v in enumerate(pal_list[:nlen]): pal[i] = v
         self.palettes[name] = Texture(pal, nlen/3)
-    def eval_template(self, template, args):
-        return template.format(*map(self.evaluate , args))
+    def eval_template(self, template):
+        #for key in Formatter().parse(template):
+        #    print key[1]
+        return Formatter().vformat(template,[],self)
     def get_image_name(self):
-        return self.eval_template(self.image_name_template[0], self.image_name_template[1])
+        return self.eval_template(self.image_name_template)
     def get_title(self):
-        return self.eval_template(self.title_template[0], self.title_template[1])
+        return self.eval_template(self.title_template)
     def get_key_function(self, KeyDict):
         def KeyHandler(k, x, y):
             #print k
@@ -186,9 +222,15 @@ class UniversalViewer:#(MutableMap):
         def help_thread(self, myobject):
             if myobject is None:
                 help(self)
-            self.com_thr = async_getline()
+            else: help(myobject)
+            self.__async_getline()
             self.__help = False
         help_thread(self,myobject)
+    def __async_getline(self):
+        try:
+            self.com_thr = self.rl_reader.async_getline()
+        except EOFError:
+            self.exit()
     def set_pal(self, pal_name):
         self.tex = self.palettes[pal_name]
         self.cur_pal = pal_name
@@ -246,6 +288,10 @@ class UniversalViewer:#(MutableMap):
         return self.V.get_wire()
     def toggle_axis(self):
         self.ax^=1
+    def __mouse_click(self, but, ud, x,y):
+        if but in [GLUT_LEFT_BUTTON, 3,4] and ud == GLUT_DOWN:
+            self.bb_auto=False
+        self.V.mouse_click(but, ud, x, y)
     def rotate(self, x, y):
         x_min = 0 if x>=0 else -x
         y_min = 0 if y>=0 else -y
@@ -267,13 +313,19 @@ class UniversalViewer:#(MutableMap):
         if (not self.__help and not self.com_thr.is_alive()):
             command = self.com_thr.result_queue.get()
             try:
-                self.execute(command)
-            except (NameError, SyntaxError):
-                print "command %s not found"%command
+                if isinstance (command, str):
+                    self.execute(command)
+                else: raise command
+            except (NameError, SyntaxError, TypeError):
+                import traceback
+                traceback.print_exception( *sys.exc_info())
+            except EOFError:
+                self.exit()
             except:
-                print "Unexpected error:", sys.exc_info()[0]
-                exit()
-            if (not self.__help and not self.com_thr.is_alive()): self.com_thr = async_getline()
+                import traceback
+                traceback.print_exception( *sys.exc_info())
+                self.exit()
+            if (not self.__help and not self.com_thr.is_alive()): self.__async_getline()
         cur_time = time.time()
         for i, (name, last_time, interval, action) in enumerate(self.idle_actions):
             if cur_time-last_time>=interval:
@@ -323,6 +375,31 @@ class UniversalViewer:#(MutableMap):
     def clip_plane_move(self, val,pl):
         self.bb_auto = False
         self.V.clip_plane_move(val,pl)
+    def switch_buffer(self, name,  save = True, SaveDict={}):
+        if (self.buffer is not None) and save:
+            print "Save", self.buffer
+            self.buffers[self.buffer] = (self.dump_params(**self.buffers[self.buffer][1]), self.buffers[self.buffer][1])
+        self.buffer  = name
+        if name in self.buffers:
+            print "Load", self.buffer
+            self.load_params(**self.buffers[name][0])
+        print "Save", self.buffer
+        self.buffers[name] = ( self.dump_params(**SaveDict), SaveDict )
+        glutPostRedisplay()
+    def next_buffer(self, save=True):
+        if not self.buffers: return
+        bn = self.buffers.keys()
+        bn.sort()
+        bi = bn.index(self.buffer)
+        bi = (bi +1) % len(bn)
+        self.switch_buffer(bn[bi], save, self.buffers[bn[bi]][1])
+    def prev_buffer(self, save=True):
+        if not self.buffers: return
+        bn = self.buffers.keys()
+        bn.sort()
+        bi = bn.index(self.buffer)
+        bi = bi - 1
+        self.switch_buffer(bn[bi], save,self.buffers[bn[bi]][1])
     def autoscale(self):
         bb_min, bb_max = self.Surf.autobox()
         self.set_xrange(bb_min[0], bb_max[0])
@@ -349,7 +426,7 @@ class UniversalViewer:#(MutableMap):
         glutSetWindowTitle(self.get_title())#self.execute(self.title_template))
         glutSwapBuffers()
     def exit(self):
-        exit(0)
+        sys.exit()
     def keyhelp(self):
 #тут не хватает нормального форматирования для комбинаций клавиш
         for kd in [self.KeyDown, self.SpecialKeyDown, self.KeyUp, self.SpecialKeyUp]:
@@ -378,7 +455,7 @@ class UniversalViewer:#(MutableMap):
         glutSetWindowTitle(self.get_title())#self.exec(self.title_template.format(self.params)))
         glutDisplayFunc(self.display)
         glutMotionFunc(self.V.drag)
-        glutMouseFunc(self.V.mouse_click)
+        glutMouseFunc(self.__mouse_click)
         glutKeyboardFunc(self.get_key_function( self.KeyDown))
         glutKeyboardUpFunc(self.get_key_function( self.KeyUp))
         glutSpecialFunc(self.get_key_function( self.SpecialKeyDown))
