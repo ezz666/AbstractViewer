@@ -66,6 +66,7 @@ DefaultKeyMapping = [ ("next()", " "), ("jump(-1)"," ", ["Shift"]),
 
 class UniversalViewer:
     def __init__(self, argv):
+        glutInitContextVersion(3,3)
         self.V = Viewer()
         glutInit(argv)
         glutInitWindowSize(self.V.get_width(), self.V.get_height())
@@ -74,14 +75,22 @@ class UniversalViewer:
         self.V.GL_init()
         #self.additional_names = {}
         self.spr = ShaderProg()
+        print "before pal"
+        checkOpenGLerror()
         self.palettes = {} # names for palettes?
         self.add_pal("pal", [1.,0.,0., 1.,.5,0., 1.,1.,0., 0.,1.,0., 0.,1.,1., 0.,0.,1., 1.,0.,1.])
         self.add_pal("rgb", [1.,0.,0.,0.,1.,0.,0.,0.,1.])
         # make it simple to create pal!!
+        print "After pal"
+        checkOpenGLerror()
         self.Axis = Axis()
+        print "After axis"
+        checkOpenGLerror()
         self.rl_reader = rl_async_reader(os.path.expanduser("~/.UniversalViewer"))
         #self.rl_reader.set_completer(self.__class__.__dict__)
         self.Axis.load_on_device()
+        print "After axis load"
+        checkOpenGLerror()
         d ={}
         for k in SpecialKeysList:
             #print k
@@ -410,7 +419,7 @@ class UniversalViewer:
     def autoscalecb(self):
         #self.cb_auto = True
         self.Surf.auto_cbrange()
-    def display(self):
+    def _display(self):
         if self.bb_auto:
             self.autoscale()
         self.V.display()
@@ -423,6 +432,8 @@ class UniversalViewer:
             self.V.axis_switch()
             self.spr.render(self.Axis, self.V, self.palettes["rgb"])
             self.V.axis_switch()
+    def display(self):
+        self._display()
         glutSetWindowTitle(self.get_title())#self.execute(self.title_template))
         glutSwapBuffers()
     def exit(self):

@@ -32,6 +32,8 @@
 // разобрать несколько вариантов.
 // модели тоже абстрактным классом выдавать, вероятно упростит дело
 // пока захардкодим, потом рефакторить будем)
+// Выделить в отдлеьную функцию определение scale из размера коробки
+void checkOpenGLerror();
 const float pal[12] = {
     0.f, 0.f, 0.f,
     1.f, 0.f, 0.f,
@@ -47,6 +49,7 @@ struct vertex{
 class Texture{
     private:
         GLuint textureID;
+        GLuint samplerID;
         int tex_len;
     public:
         Texture(){};
@@ -54,7 +57,7 @@ class Texture{
         ~Texture();
         int get_length();
         //void load_texture(const float * pal, int length);
-        void use_texture(GLint tli);
+        void use_texture(/*GLint tli*/);
 };
 //--------------------------------------------------------------------------------
 //VIEWER
@@ -108,7 +111,8 @@ class Viewer{
         //void set_zrange(float lower, float upper);
         std::string get_command();
         //void rotate(  float x, float y, float z);
-        glm::mat4 calc_mvp();
+        const glm::mat4 calc_mvp();
+        const glm::mat4 calc_itmvp() const;
         //void set_view(float x, float y, float z);
         //void set_pal();
         //--------------------------------------------------------------------------------
@@ -135,8 +139,8 @@ class Viewer{
 class ShaderProg{
     private:
         GLuint vshader, fshader, sprog;
-        GLint vattr, nattr, cattr, mvp_loc,
-              unif_minmax, tex_length, vmin, vmax;
+        GLint vattr, nattr, cattr, mvp_loc, it_mvp_loc,
+              unif_minmax, /*tex_length,*/ vmin, vmax;
         static GLuint ShaderLoad(GLenum shader_type, const char * shader_file);
         static GLuint ShaderComp(GLenum shader_type, const char * shader_source);
         static GLuint ProgLink(GLuint vShader, GLuint fShader);
@@ -149,7 +153,8 @@ class ShaderProg{
         ShaderProg(const char * vertex_shader_source, const char * fragment_shader_source);
         void extern_load(const char * vertex_shader_file, const char * fragment_shader_file);
         /*template<int sur_size>*/ void render(/*Surface<sur_size>*/Plottable * surf, Viewer * view, Texture* tex);
-        void load_mvp(const glm::mat4 & MVP);
+        ///*template<int sur_size>*/ void render(/*Surface<sur_size>*/Plottable * surf, Viewer * view);
+        void load_mvp(const glm::mat4 & MVP, const glm::mat4 & itMVP);
         void loadclip(const glm::vec3 & vi, const glm::vec3 & va);
         ~ShaderProg();
 };

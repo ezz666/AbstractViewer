@@ -6,6 +6,7 @@
 #include <chrono>
 #include "viewer_template.hpp"
 #include <glm/ext.hpp>
+#include <glm/glm.hpp>
 //#include "frontview.hpp"
 const double much_enough = 1e3;
 //------------------------------------------------------------------------------
@@ -140,18 +141,19 @@ void Viewer::drag(int x, int y){
 void Viewer::GL_init(){
     checkOpenGLerror();
     printf("init begin\n");
+    glewExperimental=GL_TRUE;
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
     glShadeModel(GL_SMOOTH);
+    glEnable(GL_CLIP_DISTANCE0);
+    glEnable(GL_CLIP_DISTANCE1);
+    glEnable(GL_CLIP_DISTANCE2);
+    glEnable(GL_CLIP_DISTANCE3);
+    glEnable(GL_CLIP_DISTANCE4);
+    glEnable(GL_CLIP_DISTANCE5);
     //glEnable( GL_BLEND );
     //glBlendFunc(GL_ONE, GL_ONE);
     glewInit();
-    //glEnable(GL_CLIP_DISTANCE0);
-    //glEnable(GL_CLIP_DISTANCE1);
-    //glEnable(GL_CLIP_DISTANCE2);
-    //glEnable(GL_CLIP_DISTANCE3);
-    //glEnable(GL_CLIP_DISTANCE4);
-    //glEnable(GL_CLIP_DISTANCE5);
     checkOpenGLerror();
     printf("init end\n");
 }
@@ -205,7 +207,7 @@ Viewer::~Viewer(){
     //exit(0);
 }
 //--------------------------------------------------------------------------------
-glm::mat4 Viewer::calc_mvp(){
+const glm::mat4 Viewer::calc_mvp(){
     glm::quat quatx = glm::angleAxis(rotx*Sens, glm::vec3(1.f,0.f,0.f));
     glm::quat rot_tmp = glm::angleAxis(roty*Sens, quatx * glm::vec3(0.f,1.f,0.f) /* quatx*/) *
                 quatx ;
@@ -222,6 +224,12 @@ glm::mat4 Viewer::calc_mvp(){
     return MVP;
     //glUniformMatrix4fv( mvp_loc, 1, GL_FALSE, glm::value_ptr(MVP));
 //    scale =scale_tmp;
+}
+const glm::mat4 Viewer::calc_itmvp() const{
+    if (!axis_sw){
+        return glm::inverseTranspose(MVP);
+    }
+    else return glm::mat4(1.0);// it's an identity matrix if that is not clear
 }
 //--------------------------------------------------------------------------------
 void Viewer::set_view(float pitch, float yaw, float roll){
@@ -419,8 +427,9 @@ void ShaderProg::init(){
     AttachAttrs(nattr, "normal", sprog);
     AttachAttrs(cattr, "color", sprog);
     AttachUniform(mvp_loc, "MVP", sprog);
+    AttachUniform(it_mvp_loc, "itMVP", sprog);
     AttachUniform(unif_minmax, "minmaxmul", sprog);
-    AttachUniform(tex_length, "tex_length",sprog);
+    //AttachUniform(tex_length, "tex_length",sprog);
     AttachUniform(vmin, "vmin",sprog);
     AttachUniform(vmax, "vmax",sprog);
     checkOpenGLerror();
@@ -540,22 +549,31 @@ void ShaderProg::AttachAttrs(GLint & Attr ,const char* attr_name,GLuint Program)
 //--------------------------------------------------------------------------------
 /*template<int sur_size>*/ void ShaderProg::render(/*Surface<sur_size>*/ Plottable * surf, Viewer * view, Texture * tex ){
     glUseProgram(sprog);
-    tex->use_texture(tex_length);
-    load_mvp(view->calc_mvp());
+    tex->use_texture(/*tex_length*/);
+    load_mvp(view->calc_mvp(), view->calc_itmvp());
     loadclip(view->get_vmin(), view->get_vmax());
     surf->plot(vattr,nattr,cattr,unif_minmax);
     glUseProgram(0);
 }
+///*template<int sur_size>*/ void ShaderProg::render(/*Surface<sur_size>*/ Plottable * surf, Viewer * view){
+//    glUseProgram(sprog);
+//    //tex->use_texture(tex_length);
+//    load_mvp(view->calc_mvp());
+//    loadclip(view->get_vmin(), view->get_vmax());
+//    surf->plot_index(vattr,nattr,cattr,unif_minmax);
+//    glUseProgram(0);
+//}
 //template void ShaderProg::render<2>(Surface<2> * surf, Viewer * view, Texture * tex );
 //template void ShaderProg::render<4>(Surface<4> * surf, Viewer * view, Texture * tex );
 //--------------------------------------------------------------------------------
 void ShaderProg::loadclip(const glm::vec3 & vi , const glm::vec3 & va){
-    glUniform3f( vmax, va.x,va.y,va.z);
-    glUniform3f( vmin, vi.x,vi.y,vi.z);
+    if (vmax != -1) glUniform3f( vmax, va.x,va.y,va.z);
+    if (vmin != -1) glUniform3f( vmin, vi.x,vi.y,vi.z);
 }
 //--------------------------------------------------------------------------------
-void ShaderProg::load_mvp(const glm::mat4 & MVP){
-    glUniformMatrix4fv( mvp_loc, 1, GL_FALSE, glm::value_ptr(MVP));
+void ShaderProg::load_mvp(const glm::mat4 & MVP, const glm::mat4& itMVP){
+    if (mvp_loc != -1) glUniformMatrix4fv( mvp_loc, 1, GL_FALSE, glm::value_ptr(MVP));
+    if (it_mvp_loc != -1) glUniformMatrix4fv( it_mvp_loc, 1, GL_FALSE, glm::value_ptr(itMVP));
 }
 
 //--------------------------------------------------------------------------------
@@ -564,16 +582,25 @@ void ShaderProg::load_mvp(const glm::mat4 & MVP){
 Texture::Texture(const float* pal, int length){
     tex_len = length;
     glGenTextures(1, &textureID);
+    glGenSamplers(1, &samplerID);
+    //glBindSampler(GL_TEXTURE0, samplerID);
+    glSamplerParameteri(samplerID,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+    glSamplerParameteri(samplerID,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+    printf("gen tex sampl\n");
+    checkOpenGLerror();
     glBindTexture(GL_TEXTURE_1D, textureID);
-    glTexParameteri(GL_TEXTURE_1D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_1D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-    glBindTexture(GL_TEXTURE_1D, textureID);
-    glTexImage1D(GL_TEXTURE_1D, 0, 3, tex_len, 0, GL_RGB, GL_FLOAT, pal);
+    printf("bind tex sampl\n");
+    checkOpenGLerror();
+    printf("pre load tex\n");
+    glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, tex_len, 0, GL_RGB, GL_FLOAT, pal);
+    printf("load tex\n");
+    checkOpenGLerror();
     glBindTexture(GL_TEXTURE_1D, 0);
 }
 //--------------------------------------------------------------------------------
 Texture::~Texture(){
     glDeleteTextures(1,&textureID);
+    glDeleteSamplers(1,&samplerID);
 }
 //--------------------------------------------------------------------------------
 int Texture::get_length(){
@@ -586,10 +613,22 @@ int Texture::get_length(){
 //
 //}
 //--------------------------------------------------------------------------------
-void Texture::use_texture(GLint tli){
-    glUniform1f(tli,(float)tex_len);
-    glEnable(GL_TEXTURE_1D);
+void Texture::use_texture(/*GLint tli*/){
+    //printf("texture use begin\n");
+    //checkOpenGLerror();
+    //glEnable(GL_TEXTURE_1D);
+    //checkOpenGLerror();
+    //printf("texture enabled\n");
+    //glUniform1f(tli,(float)tex_len);
     glActiveTexture(GL_TEXTURE0);
+    //printf("texture activated\n");
     glBindTexture(GL_TEXTURE_1D, textureID);
+    //checkOpenGLerror();
+   // printf("texture binded\n");
+    glBindSampler(0, samplerID);
+    //checkOpenGLerror();
+    //printf("sampler activated\n");
+    //checkOpenGLerror();
+    //printf("texture use set\n");
 }
 //--------------------------------------------------------------------------------

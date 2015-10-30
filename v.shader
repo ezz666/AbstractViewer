@@ -1,22 +1,28 @@
-attribute vec3 coord;
-attribute vec3 normal;
-attribute float color;
-//uniform vec3 vmin;
-//uniform vec3 vmax;
+#version 330 core
+in vec3 coord;
+in vec3 normal;
+in float color;
+out float gl_ClipDistance[6];
+uniform vec3 vmin;
+uniform vec3 vmax;
 uniform mat4 MVP;
+uniform mat4 itMVP;
 uniform vec3 minmaxmul;
-varying float z,c;
-varying vec3 n;
-varying vec3 co;
+out float z, c;
+out float n;
+out vec3 co;
+const float lighting=0.75;
 void main() {
+    const float camera_light = 0.95;
+    const float vertical_light = 0.05;
     vec4 res = MVP*vec4(coord,1.0);
-    //for(int i =0; i<3; i++){
-    //    gl_ClipDistance[i]=coord[i]- vmin[i];
-    //    gl_ClipDistance[i+3]=vmax[i] -coord[i];
-    //}
+    for(int i =0; i<3; i++){
+        gl_ClipDistance[i]=coord[i]- vmin[i];
+        gl_ClipDistance[i+3]=vmax[i] -coord[i];
+    }
     co = coord;
     z = res.z;
-    n = normal;
+    n = lighting*abs(dot(normal,(camera_light*normalize(vec4(0.0,0.0,1.0,0.0)*itMVP).xyz)+ (normal.x+normal.y+normal.z)/3.*vertical_light))/(camera_light+vertical_light);
     c = (color-minmaxmul.x)/(minmaxmul.y - minmaxmul.x);
     gl_Position = res;
 }
