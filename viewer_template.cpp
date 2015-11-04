@@ -286,10 +286,14 @@ void Viewer::display(){
 void Viewer::reshape(int w, int h){
     glViewport(0, 0, w, h);
     width = w; height = h;
-    int l = (w<h)? w:h;
-    min_size = l;
+    //int l = 
+    min_size = std::min(w, h);
     float max_size = std::max(w,h);
-    ort = glm::ortho(-(GLfloat)w/(GLfloat)l*scale, (GLfloat)w/(GLfloat)l*scale,- (GLfloat)h/(GLfloat)l*scale,(GLfloat)h/(GLfloat)l*scale, (GLfloat)(-max_size*scale/min_size* much_enough),(GLfloat)(max_size*scale/min_size+scale* much_enough));
+    int l = min_size;
+    ort = glm::ortho(static_cast<GLfloat>(-w*scale/l), static_cast<GLfloat>(w*scale/l),
+                    static_cast<GLfloat>(-h*scale/l), static_cast<GLfloat>(h*scale/l),
+                    static_cast<GLfloat>(-max_size*scale/min_size* much_enough),
+                    static_cast<GLfloat>(max_size*scale/min_size+scale* much_enough));
     calc_mvp();
     glutPostRedisplay();
 }

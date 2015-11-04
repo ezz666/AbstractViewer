@@ -449,12 +449,14 @@ class UniversalViewer:
     def saveimage(self,name):
         #from OpenGL import GL
         x,y = self.get_width(), self.get_height()
+        print x,y
         GL.glReadBuffer(GL.GL_FRONT)
-        buffer = ( GL.GLubyte * (3*x*y) )(0)
+        #buffer = ( 3*GL.GLubyte * x*y )(0)
         glutPostRedisplay()
-        GL.glReadPixels(0, 0, x-3, y-3, GL.GL_RGB, GL.GL_UNSIGNED_BYTE, buffer)
+        #self.display()
+        buffer = GL.glReadPixels(0, 0, x, y, GL.GL_RGB, GL.GL_UNSIGNED_BYTE)
         time.sleep(0.5)
-        image = Image.frombytes(mode="RGB", size=(x-3, y-3), data=buffer)
+        image = Image.frombytes(mode="RGB", size=(x, y), data=buffer)
         image = image.transpose(Image.FLIP_TOP_BOTTOM)
         print "saved to "+name
         image.save(name)
