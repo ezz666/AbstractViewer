@@ -10,5 +10,5 @@ void main() {
     if (c <0. || c>1.) discard;
     float col = (c*(tex_length - 1.0)+0.5)/tex_length;
     FragColor =texture(pal, col)*(n+1.-lighting);
-    gl_FragDepth =(z*1.)*.5 ;//0.5*gl_DepthRange.diff +0.5*(gl_DepthRange.far+gl_DepthRange.near);
+    gl_FragDepth =(z+1.)*.5 ;//0.5*gl_DepthRange.diff +0.5*(gl_DepthRange.far+gl_DepthRange.near);
 }

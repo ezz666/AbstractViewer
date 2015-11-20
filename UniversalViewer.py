@@ -10,7 +10,7 @@ from aivlib.vctf3 import *
 #from collections import MutableMapping
 import time
 from async_input import *
-from mview import *
+from viewer import *
 from string import Formatter
 
 KeysList = " `1234567890qwertyuiop[]asdfghjkl;'xcvbnm,,./~!@#$%^&*()_-+QWERTYUIOP{}ASDFGHJKL:\"|\\ZXCVBNM<>?"

@@ -21,7 +21,8 @@ void main() {
     int r = (gl_VertexID & (255));
     int g = (gl_VertexID >> 8 ) & (255);
     int b = (gl_VertexID >> 16) & (65535);
-    z = res.z;
+    vec3 center = (vmin+vmax)*0.5;
+    z = (dot((coord -center),normalize(vec4(0.,0.,1.,0.0)*itMVP).xyz))/(distance(vmax,vmin));
     c = (color-minmaxmul.x)/(minmaxmul.y - minmaxmul.x);
     intcolor = ivec3(r,g,b);
     gl_Position = res;

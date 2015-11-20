@@ -318,10 +318,10 @@ void Viewer::reshape(int w, int h){
     width = w; height = h;
     //int l =
     min_size = std::min(w, h);
-    float max_size = std::max(w,h);
-    
+    //float max_size = std::max(w,h);
+
     int l = min_size;
-    
+
     ort = glm::ortho(static_cast<GLfloat>(-w*scale/l), static_cast<GLfloat>(w*scale/l),
                     static_cast<GLfloat>(-h*scale/l), static_cast<GLfloat>(h*scale/l),
                     static_cast<GLfloat>(-scale*sqrt(3)),
