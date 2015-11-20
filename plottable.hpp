@@ -27,6 +27,7 @@ class Plottable{
 //------------------------------------------------------------------------------
 class Axis: public Plottable{
     GLint unif_minmax;
+    ~Axis(){};
     public:
     Axis():Plottable(){};
     void load_on_device();
@@ -42,7 +43,7 @@ template <class T> class SurfTemplate: public Plottable {
         std::vector<glm::vec3> triangles;
         std::vector<T> appends;
         std::vector<unsigned int> select;
-        SurfTemplate<T>(): auto_select(true), Plottable(){};
+        SurfTemplate<T>(): Plottable(), auto_select(true){};
         ~SurfTemplate<T>(){};
     public:
         bool auto_select;

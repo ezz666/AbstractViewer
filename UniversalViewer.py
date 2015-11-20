@@ -37,19 +37,10 @@ def func2string(func):
 #(self, func, key,   modificators = [], key_pressed = [],up = False)
 DefaultKeyMapping = [ ("next()", " "), ("jump(-1)"," ", ["Shift"]),
         ("keyhelp()","h",["Shift"]), ("exit()", "q",["Shift"]),("keyhelp()","h"), ("exit()", "q"),
-        #("rangemove(0.1,True)","+",["Ctrl"]), ("rangemove(0.1,True)","+",["Ctrl","Shift"]),
-        #("extendrange(0.2)","-",["Ctrl"]), ("extendrange(0.2)","-",["Ctrl","Shift"]),
-        #("rangemove(1/1.1-1.0,True)","{",["Shift"]), ("rangemove(1/1.1-1.0,True)","{"),
-        #("rangemove(1/1.1-1.0,False)","}",["Shift"]), ("rangemove(1/1.1-1.0,False)","}"),
-        #("rangemove(0.1,True)","[",["Shift"]), ("rangemove(0.1,True)","["),
-        #("rangemove(0.1,False)","]",["Shift"]), ("rangemove(0.1,False)","]"),
-        #("autoscalecb()","a"), ("autoscalecb()","a",["Shift"]),
         ("autoscale()","A"), ("autoscale()","A",["Shift"]),
         ("saveimage(get_image_name())","s"), ("saveimage(get_image_name())","s",[ "Shift" ]),
         ("toggle_wire()","w"), ("toggle_wire()","w",["Shift"]),
         ("ax^=True","c"), ("ax^=True","c",["Shift"]),
-        #("set_item((get_item()+1)%get_appends_len())",">",["Shift"]),
-        #("set_item((get_item()+get_appends_len() -1)%get_appends_len())","<",["Shift"]),
         ("rotate(-10,0)", GLUT_KEY_LEFT), ("rotate(10,0)", GLUT_KEY_RIGHT),
         ("rotate(0,-10)", GLUT_KEY_UP), ("rotate(0,10)", GLUT_KEY_DOWN),
         ("zoom(10)", GLUT_KEY_UP,["Ctrl"]), ("zoom(-10)", GLUT_KEY_DOWN, ["Ctrl"]),
@@ -62,7 +53,12 @@ DefaultKeyMapping = [ ("next()", " "), ("jump(-1)"," ", ["Shift"]),
         ("clip_plane_move(0.01,4)", GLUT_KEY_RIGHT,[],["5"]), ("clip_plane_move(-0.01,4)", GLUT_KEY_LEFT, [],["5"]),
         ("clip_plane_move(0.01,5)", GLUT_KEY_RIGHT,[],["6"]), ("clip_plane_move(-0.01,5)", GLUT_KEY_LEFT, [],["6"]) ]
 # add cutting surfaces
-
+SurfTemplateKeys =  [ ("extendrange(1.1)","+",["Ctrl"]), ("extendrange(1.1)","+",["Ctrl","Shift"]),
+        ("extendrange(1/1.1)","-",["Ctrl"]), ("extendrange(1/1.1)","-",["Ctrl","Shift"]),
+        ("rangemove(1/1.1-1.0,True)","{",["Shift"]), ("rangemove(1/1.1-1.0,True)","{"),
+        ("rangemove(1/1.1-1.0,False)","}",["Shift"]), ("rangemove(1/1.1-1.0,False)","}"),
+        ("rangemove(0.1,True)","[",["Shift"]), ("rangemove(0.1,True)","["),
+        ("rangemove(0.1,False)","]",["Shift"]), ("rangemove(0.1,False)","]") ]
 
 class UniversalViewer:
     def __init__(self, argv):
@@ -163,40 +159,54 @@ class UniversalViewer:
     #def __len__(self):
     #    return len(self.params)
     def execute(self, string, **kwargs):
+        "выполняет функции в переменных вьюера, служебная функциия"
         #kwargs["__builtins__"]=__builtins__
         kwargs.update(globals())
         if isinstance(string, str): exec(string,kwargs,self)
         else: exec(func2string(string), kwargs, self)
         glutPostRedisplay()
     def evaluate(self, mystring, **kwargs):
+        "вычисляет выражение в переменных вьюера, служебная функциия"
         #kwargs["__builtins__"]=__builtins__
         kwargs.update(globals())
         print mystring
         if isinstance(mystring, str): return eval(mystring,kwargs,self)
         else: return eval(func2string(mystring), kwargs, self)
     def set_key(self, func, key, modificators = [], key_pressed = [], up = False):
+        '''Установливает сочетание клавиш, key — клавиша к которой пивязвнв функция, func — функция для выполнения в виде строки,
+        modificators — список нажатых специальных клавиш "Ctrl", "Shift", "Alt" по дефолту пустой,
+        key_pressed — спислк клавиш, которые должны быть зажаты, key не считается, up — булево число, True если действие выполняется
+        на отпускание, False — усли на нажатии, по умолчанию False'''
         if(( key not in list(KeysList))  and (key not in SpecialKeysList)): print "Unhandled key {}".format(key); return
         KeysDict = (self.KeyDown, self.KeyUp, self.SpecialKeyDown, self.SpecialKeyUp)[ int(key in SpecialKeysList) *2 + int(up)]
         KeysDict[key].append((func, modificators, key_pressed))
 #-------------------------------------------------------------
     def states(self):
+        "Возвращает состояние клавиш модификаторов в словаре"
         state = glutGetModifiers()
         return {"Shift":bool(state & 0x1), "Ctrl":bool(state & 0x2), "Alt":bool(state & 0x4)}
     def add_pal(self, name, pal_list):
+        '''Добавляет палитру с именем name и цветами заданными в виде списка float со значениями от 0 до 1,
+        они групируются по 3 формируя цвета, длина округляется до ближайшей снизу кратной 3'''
         truncate3 = lambda x: x - x%3
         nlen = truncate3(len(pal_list))
         pal = float_array(nlen)
         for i, v in enumerate(pal_list[:nlen]): pal[i] = v
         self.palettes[name] = Texture(pal, nlen/3)
     def eval_template(self, template):
+        "Вычисляет значение строки-шаблона"
         #for key in Formatter().parse(template):
         #    print key[1]
         return Formatter().vformat(template,[],self)
     def get_image_name(self):
+        "Вычисляет значение изображения по умолчанию, используя image_name_template"
+        #for key in Formatter().parse(template):
         return self.eval_template(self.image_name_template)
     def get_title(self):
+        "Вычисляет значение заголовка, используя titel_template"
         return self.eval_template(self.title_template)
     def get_key_function(self, KeyDict):
+        "Возвращает фунеции для клавиш, служебная функция"
         def KeyHandler(k, x, y):
             #print k
             if KeyDict == self.KeyDown :
@@ -237,78 +247,105 @@ class UniversalViewer:
             self.__help = False
         help_thread(self,myobject)
     def __async_getline(self):
+        "Асинхронно читает строку со стандартного ввода, служебная функция"
         try:
             self.com_thr = self.rl_reader.async_getline()
         except EOFError:
             self.exit()
     def set_pal(self, pal_name):
+        "Устанавливает палитру"
         self.tex = self.palettes[pal_name]
         self.cur_pal = pal_name
     def set_view(self,pitch, yaw, roll):
+        "Устанавливает вид по углам Эйлера"
         self.V.set_view(pitch,yaw,roll)
     def set_pos(self, x, y, z):
+        "Устанавливает смещение"
         self.V.set_pos(x,y,z)
     def set_scale(self, sc):
+        "Устанавливает масштаб"
         self.V.set_scale(sc)
     def set_xrange__(self, lower, upper):
+        "Устанавливает диапазон значений по x, не меняет bb_auto"
         #self.bb_auto = False
         self.V.set_bounding_box(0, lower, False), self.V.set_bounding_box(0, upper, True)
     def set_yrange__(self, lower, upper):
+        "Устанавливает диапазон значений по y, не меняет bb_auto"
         #self.bb_auto = False
         self.V.set_bounding_box(1, lower, False), self.V.set_bounding_box(1, upper, True)
     def set_zrange__(self, lower, upper):
+        "Устанавливает диапазон значений по z, не меняет bb_auto"
         #self.bb_auto = False
         self.V.set_bounding_box(2, lower, False), self.V.set_bounding_box(2, upper, True)
     def set_xrange(self, lower, upper):
+        "Устанавливает диапазон значений по x, меняет bb_autp на False "
         self.bb_auto = False
         self.set_xrange__(lower,upper)
     def set_yrange(self, lower, upper):
+        "Устанавливает диапазон значений по y, меняет bb_autp на False "
         self.bb_auto = False
         self.set_yrange__(lower,upper)
     def set_zrange(self, lower, upper):
+        "Устанавливает диапазон значений по z, меняет bb_autp на False "
         self.bb_auto = False
         self.set_zrange__(lower,upper)
     def get_scale(self):
+        "Вовращает текущий масштаб"
         return self.V.get_scale()
     def get_width(self):
+        "Возвращает ширину окна"
         return self.V.get_width()
     def get_height(self):
+        "Возвращает высоту окна"
         return self.V.get_height()
     def get_pal(self):
+        "Возвращает имя текущей палитры"
         return self.cur_pal
     def get_xrange(self):
+        "Возвращает диапазон значений x"
         return self.V.get_bounding_box(0, False), self.V.get_bounding_box(0, True)
     def get_yrange(self):
+        "Возвращает диапазон значений y"
         return self.V.get_bounding_box(1, False), self.V.get_bounding_box(1, True)
     def get_zrange(self):
+        "Возвращает диапазон значений z"
         return self.V.get_bounding_box(2, False), self.V.get_bounding_box(2, True)
     def get_pos(self):
+        "Возвращает текущую позицию"
         p = float_array(3)
         self.V.get_pos(p)
         return (p[0], p[1], p[2])
     def get_view(self):
+        "Возвращает углы Эулера для текущего вида"
         p,y,r = float_array(1),float_array(1),float_array(1)
         self.V.get_view(p,y,r)
         return (p[0],y[0],r[0])
     def toggle_wire(self):
+        "Переключает между проволочной моделью и обычной"
         self.V.togglewire()
     def set_wire(self, b_tf):
+        "Переключение между проволочной моделью и обычной, True — проволочная, False — обычная"
         self.V.set_wire(b_tf)
     def get_wire(self):
+        "Возвращает True, если используется проволочная модель"
         return self.V.get_wire()
     def toggle_axis(self):
+        "Переключает отображение осей"
         self.ax^=1
     def __mouse_click(self, but, ud, x,y):
+        "Функция для мышки, служебная функция"
         if but in [GLUT_LEFT_BUTTON, 3,4] and ud == GLUT_DOWN:
             self.bb_auto=False
         self.V.mouse_click(but, ud, x, y)
     def rotate(self, x, y):
+        "Поворот, в координатах окна"
         x_min = 0 if x>=0 else -x
         y_min = 0 if y>=0 else -y
         self.V.mouse_click(GLUT_RIGHT_BUTTON, GLUT_DOWN, x_min,y_min )
         self.V.drag(x+x_min,y)
         self.V.mouse_click(GLUT_RIGHT_BUTTON, GLUT_UP, x+x_min,y_min)
     def move(self, x, y):
+        "Перемещение, в координатах окна"
         self.bb_auto=False
         x_min = 0 if x>=0 else -x
         y_min = 0 if y>=0 else -y
@@ -316,10 +353,12 @@ class UniversalViewer:
         self.V.drag(x,y)
         self.V.mouse_click(GLUT_LEFT_BUTTON,GLUT_UP,x,y)
     def zoom(self, x):
+        "Зум, в координатах окна, положительное приблидает, отрицательное отдаляет, величина игнорируется"
         self.bb_auto=False
         if x<0: self.V.mouse_click(4,GLUT_DOWN,0,0)
         else: self.V.mouse_click(3,GLUT_DOWN,0,0)
     def idle(self):
+        "Функция idle для окна"
         if (not self.__help and not self.com_thr.is_alive()):
             command = self.com_thr.result_queue.get()
             try:
@@ -342,6 +381,7 @@ class UniversalViewer:
                 self.execute(action)
                 self.idle_actions[i][1] = time.time()
     def add_idle_action(self, name, interval,action):
+        "Добавляет действие с именем name в цикл idle, с интервалом в секундах interval и действием action в виде строки"
         for i,act in enumerate(self.idle_actions):
             if name ==act[0]:
                 self.idle_actions[i]=[name,time.time(), interval,action]
@@ -349,18 +389,22 @@ class UniversalViewer:
         else:
             self.idle_actions.append([name,time.time(), interval,action])
     def del_idle_action(self,name):
+        "Удаляет действие с именем name из цикла idle"
         for i, (aname, lt, interv, action) in enumerate(self.idle_actions):
             if name == aname:
                 del self.idle_actions[i]
     def clear_idle_actions(self):
+        "Очищает цикл idle"
         del self.idle_actions
         self.idle_actions = []
     def plot(self,surf):
-       self.Surf = surf
-       self.Surf.load_on_device()
+        "Устанавливает данне для отображения"
+        self.Surf = surf
+        self.Surf.load_on_device()
     #def subplot(*args);
     #    self.Surfaces += args
     def dump_params(self, **kwargs):
+        "Сохраняет параметры по словарю"
         pars = {}
         for name,set_func in kwargs.items():
             if name == set_func:
@@ -372,20 +416,20 @@ class UniversalViewer:
                 pars[name] = (result, set_func)
         return pars
     def load_params(self, **params):
+        "Загружает параметры по словарю"
         for name, val_func in params.items():
             #print name, val_func
             if name == val_func[1]:
                 self[name] = val_func[0]
             else: self[val_func[1]](*val_func[0])
-    def del_idle_act(self,name):
-        for i,act in enumerate(self.idle_actions):
-            if name ==act[0]:
-                del act
-                break
     def clip_plane_move(self, val,pl):
+        '''Перемещает плоскости отсечения, эквивалентно перемещению соответствующих границ диапазонов значений
+        на величину val внутрь диапазона. pl 0,1 и 2 нижние границы по x,y и z соответственно, 4,5,6 — верхние'''
         self.bb_auto = False
         self.V.clip_plane_move(val,pl)
     def switch_buffer(self, name,  save = True, SaveDict={}):
+        '''Переключает текущее отображение на созраненное с именем name, если save — True созраняет текущие параметры отображения
+        под текущим именем, SaveDict — словарь созраняемых параметров'''
         if (self.buffer is not None) and save:
             print "Save", self.buffer
             self.buffers[self.buffer] = (self.dump_params(**self.buffers[self.buffer][1]), self.buffers[self.buffer][1])
@@ -397,6 +441,7 @@ class UniversalViewer:
         self.buffers[name] = ( self.dump_params(**SaveDict), SaveDict )
         glutPostRedisplay()
     def next_buffer(self, save=True):
+        "Переключает на следующее отображение и сохраняет текущее если Save установлен"
         if not self.buffers: return
         bn = self.buffers.keys()
         bn.sort()
@@ -404,6 +449,7 @@ class UniversalViewer:
         bi = (bi +1) % len(bn)
         self.switch_buffer(bn[bi], save, self.buffers[bn[bi]][1])
     def prev_buffer(self, save=True):
+        "Переключает на предыдущее отображение и сохраняет текущее если Save установлен"
         if not self.buffers: return
         bn = self.buffers.keys()
         bn.sort()
@@ -411,16 +457,18 @@ class UniversalViewer:
         bi = bi - 1
         self.switch_buffer(bn[bi], save,self.buffers[bn[bi]][1])
     def autoscale(self):
+        "Установить пределы по x,y,z чтобы отображаемые данные полностью помещались в окно, устанавливает bb_auto."
         bb_min, bb_max = self.Surf.autobox()
         self.set_xrange(bb_min[0], bb_max[0])
         self.set_yrange(bb_min[1], bb_max[1])
         self.set_zrange(bb_min[2], bb_max[2])
         self.bb_auto = True
         self.V.automove()
-    def autoscalecb(self):
-        #self.cb_auto = True
-        self.Surf.auto_cbrange()
+    #def autoscalecb(self):
+    #    #self.cb_auto = True
+    #    self.Surf.auto_cbrange()
     def _display(self):
+        "Прототип функции display для окна, служебная функция"
         if self.bb_auto:
             self.autoscale()
         self.V.display()
@@ -434,27 +482,32 @@ class UniversalViewer:
             self.spr.render(self.Axis, self.V, self.palettes["rgb"])
             self.V.axis_switch()
     def display(self):
+        "Функция display для окна, служебная функция"
         self._display()
         glutSetWindowTitle(self.get_title())#self.execute(self.title_template))
         glutSwapBuffers()
     def exit(self):
+        "Закрывает окно и завершает програму"
         sys.exit()
     def keyhelp(self):
+        "Выводит справку по привязкам клавиш"
 #тут не хватает нормального форматирования для комбинаций клавиш
         for kd in [self.KeyDown, self.SpecialKeyDown, self.KeyUp, self.SpecialKeyUp]:
             for key, flist in kd.items():
                 for func, modifiers, key_pressed in flist:
                     print key, '	',func, modifiers, key_pressed
     def shader_load(self, vertex_string, fragment_string):
+        "Загружает шейдеры из строк"
         self.spr.extern_load(vertex_string, fragment_string)
     def saveimage(self,name):
+        "Сохраняет отображаемое изображение под именем name"
         #from OpenGL import GL
         x,y = self.get_width(), self.get_height()
         print x,y
         GL.glReadBuffer(GL.GL_FRONT)
         #buffer = ( 3*GL.GLubyte * x*y )(0)
         glutPostRedisplay()
-        #self.display()
+        #self.display`()
         buffer = GL.glReadPixels(0, 0, x, y, GL.GL_RGB, GL.GL_UNSIGNED_BYTE)
         time.sleep(0.5)
         image = Image.frombytes(mode="RGB", size=(x, y), data=buffer)
@@ -464,8 +517,10 @@ class UniversalViewer:
         image.close()
         del buffer, image
     def set_title(self,template):
+        "Изменяет шаблон заголовка, Шаблон является строкой для оператора форматирования"
         self.title_template = template
     def __call__(self): # start main loop
+        "Запускает mainloop"
         glutSetWindowTitle(self.get_title())#self.exec(self.title_template.format(self.params)))
         glutDisplayFunc(self.display)
         glutMotionFunc(self.V.drag)
