@@ -17,11 +17,11 @@
 //#include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <aivlib/mystream.hpp>
+//#include <aivlib/mystream.hpp>
 #include <string>
-#include <iostream>
 #include <future>
-#include "plottable.hpp"
+#include "shaderprog.hpp"
+class ShaderProg;
 //#define sur_size 4
 // добавить обертку для шейдеров
 // это поможет сразу аттачить аттрибуты
@@ -44,22 +44,6 @@ struct vertex{
     GLfloat x,y,z;
 };
 //--------------------------------------------------------------------------------
-//TEXRTURES
-//--------------------------------------------------------------------------------
-class Texture{
-    private:
-        GLuint textureID;
-        GLuint samplerID;
-        int tex_len;
-    public:
-        Texture(){};
-        Texture(const float * pal, int length);
-        ~Texture();
-        int get_length();
-        //void load_texture(const float * pal, int length);
-        void use_texture(/*GLint tli*/);
-};
-//--------------------------------------------------------------------------------
 //VIEWER
 //--------------------------------------------------------------------------------
 class Viewer{
@@ -76,6 +60,7 @@ class Viewer{
         glm::quat orient;
         glm::mat4 MVP,ort;
         std::future<std::string> command_fut;
+        GLint mvp_loc, it_mvp_loc, vmin, vmax, vport, unif_scale;
         //std::string com;
 //#ifndef PYTHON
         //Texture * tex;
@@ -123,6 +108,7 @@ class Viewer{
         void drag(int x,int y);
         void mouse_click(int button, int state, int x, int y);
         void clip_plane_move(float shift, int num);
+        void plot(ShaderProg * spr);
         void display(void);
         void reshape(int w, int h);
         void togglewire();
@@ -132,30 +118,5 @@ class Viewer{
         //void shader_init();
         void GL_init();
 
-};
-//--------------------------------------------------------------------------------
-//SAHDERS
-//--------------------------------------------------------------------------------
-class ShaderProg{
-    private:
-        GLuint vshader, fshader, sprog;
-        GLint vattr, nattr, cattr, mvp_loc, it_mvp_loc,
-              unif_minmax, /*tex_length,*/ vmin, vmax;
-        static GLuint ShaderLoad(GLenum shader_type, const char * shader_file);
-        static GLuint ShaderComp(GLenum shader_type, const char * shader_source);
-        static GLuint ProgLink(GLuint vShader, GLuint fShader);
-        static void AttachUniform(GLint & Unif, const char * name, GLuint Program);
-        static void AttachAttrs(GLint & Attr ,const char* attr_name,GLuint Program);
-        void init();
-    public:
-        static void shaderLog(unsigned int shader);
-        ShaderProg(){};
-        ShaderProg(const char * vertex_shader_source, const char * fragment_shader_source);
-        void extern_load(const char * vertex_shader_file, const char * fragment_shader_file);
-        /*template<int sur_size>*/ void render(/*Surface<sur_size>*/Plottable * surf, Viewer * view, Texture* tex);
-        ///*template<int sur_size>*/ void render(/*Surface<sur_size>*/Plottable * surf, Viewer * view);
-        void load_mvp(const glm::mat4 & MVP, const glm::mat4 & itMVP);
-        void loadclip(const glm::vec3 & vi, const glm::vec3 & va);
-        ~ShaderProg();
 };
 #endif //VIEWER_TEMPLATE

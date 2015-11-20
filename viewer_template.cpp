@@ -1,4 +1,3 @@
-#include <fstream>
 #include <iostream>
 #include <iomanip>
 //#include <string>
@@ -144,6 +143,7 @@ void Viewer::GL_init(){
     glewExperimental=GL_TRUE;
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
+    glDepthRange(-1.,1.);
     glShadeModel(GL_SMOOTH);
     glEnable(GL_CLIP_DISTANCE0);
     glEnable(GL_CLIP_DISTANCE1);
@@ -218,7 +218,7 @@ const glm::mat4 Viewer::calc_mvp(){
                 rot_tmp*(pos+glm::vec3(0.f,0.f,scale))) *
             glm::toMat4( rot_tmp * orient);
     } else {
-        float m = (float)std::max(width, height);
+        float m = (float)std::min(width, height);
         MVP = glm::ortho(-1.f*width/m,1.f*width/m,-1.f*height/m,1.f*height/m,-1.f,1.f) * glm::toMat4( rot_tmp * orient);
     }
     return MVP;
@@ -280,20 +280,52 @@ void Viewer::display(){
    // free_BO();
 }
 //--------------------------------------------------------------------------------
+void Viewer::plot(ShaderProg * spr){
+    spr->AttachUniform(mvp_loc, "MVP");
+    spr->AttachUniform(it_mvp_loc, "itMVP");
+    spr->AttachUniform(vmin, "vmin");
+    spr->AttachUniform(vmax, "vmax");
+    spr->AttachUniform(vport, "viewport");
+    spr->AttachUniform(unif_scale, "scale");
+    if (mvp_loc != -1){
+        const glm::mat4 & _MVP = calc_mvp();
+        glUniformMatrix4fv( mvp_loc, 1, GL_FALSE, glm::value_ptr(_MVP));
+    }
+    if (it_mvp_loc != -1){
+        const glm::mat4 & itMVP = calc_itmvp();
+        glUniformMatrix4fv( it_mvp_loc, 1, GL_FALSE, glm::value_ptr(itMVP));
+    }
+    if (vmin != -1){
+        auto va = get_vmin();
+        glUniform3f(vmin, va.x,va.y,va.z);
+    }
+    if (vmax != -1){
+        auto va = get_vmax();
+        glUniform3f(vmax, va.x,va.y,va.z);
+    }
+    if (vport != -1){
+        glUniform2f(vport, width, height);
+    }
+    if (unif_scale != -1){
+        glUniform1f(unif_scale,scale);
+    }
+}
 //void Viewer::idle(){
 //}
 //--------------------------------------------------------------------------------
 void Viewer::reshape(int w, int h){
     glViewport(0, 0, w, h);
     width = w; height = h;
-    //int l = 
+    //int l =
     min_size = std::min(w, h);
     float max_size = std::max(w,h);
+    
     int l = min_size;
+    
     ort = glm::ortho(static_cast<GLfloat>(-w*scale/l), static_cast<GLfloat>(w*scale/l),
                     static_cast<GLfloat>(-h*scale/l), static_cast<GLfloat>(h*scale/l),
-                    static_cast<GLfloat>(-max_size*scale/min_size* much_enough),
-                    static_cast<GLfloat>(max_size*scale/min_size+scale* much_enough));
+                    static_cast<GLfloat>(-scale*sqrt(3)),
+                    static_cast<GLfloat>(scale*sqrt(3)));
     calc_mvp();
     glutPostRedisplay();
 }
@@ -420,219 +452,3 @@ void Viewer::automove(){
 ////template void Viewer::autoscale<1>(Surface<1> * Sur);
 ////template void Viewer::autoscale<2>(Surface<2> * Sur);
 //template void Viewer::autoscale<float>(SurfTemplate<float> * Sur);
-//--------------------------------------------------------------------------------
-//SHADERS
-//--------------------------------------------------------------------------------
-
-void ShaderProg::init(){
-    sprog = ProgLink(vshader,fshader);
-    printf("link end\n");
-    AttachAttrs(vattr, "coord", sprog);
-    AttachAttrs(nattr, "normal", sprog);
-    AttachAttrs(cattr, "color", sprog);
-    AttachUniform(mvp_loc, "MVP", sprog);
-    AttachUniform(it_mvp_loc, "itMVP", sprog);
-    AttachUniform(unif_minmax, "minmaxmul", sprog);
-    //AttachUniform(tex_length, "tex_length",sprog);
-    AttachUniform(vmin, "vmin",sprog);
-    AttachUniform(vmax, "vmax",sprog);
-    checkOpenGLerror();
-    printf("shaders end\n");
-}
-//--------------------------------------------------------------------------------
-ShaderProg::ShaderProg(const char * vss, const char* fss){
-    checkOpenGLerror();
-    printf("shaders begin\n");
-    vshader = ShaderComp(GL_VERTEX_SHADER, vss);
-    printf("shaders v\n");
-    fshader = ShaderComp(GL_FRAGMENT_SHADER, fss);
-    printf("shaders f\n");
-    this->init();
-}
-//--------------------------------------------------------------------------------
-ShaderProg::~ShaderProg(){
-    glDeleteProgram(sprog);
-}
-//--------------------------------------------------------------------------------
-void ShaderProg::extern_load(const char * vsf, const char* fsf){
-    checkOpenGLerror();
-    printf("shaders begin\n");
-    vshader = ShaderLoad(GL_VERTEX_SHADER, vsf);
-    fshader = ShaderLoad(GL_FRAGMENT_SHADER, fsf);
-    printf("shaders init\n");
-    this->init();
-}
-//--------------------------------------------------------------------------------
-GLuint ShaderProg::ShaderLoad(GLenum shader_type, const char * shader_file){
-    std::ifstream in(shader_file);
-    std::string contents( (std::istreambuf_iterator<char>(in)),
-            std::istreambuf_iterator<char>() );
-    in.close();
-    char * Source  = new char[contents.length() + 1];
-    std::strcpy( Source, contents.c_str() );
-    GLuint shade = ShaderComp(shader_type, Source);
-    delete [] Source;
-    return shade;
-}
-//--------------------------------------------------------------------------------
-GLuint ShaderProg::ShaderComp(GLenum shader_type, const char * Source){
-    printf("shaders Comp\n");
-    GLuint shade = glCreateShader(shader_type);
-    printf("shaders cre\n");
-    glShaderSource(shade, 1, & Source, NULL);
-    printf("shaders comp\n");
-    glCompileShader(shade);
-    if (shader_type == GL_VERTEX_SHADER) std::cout << "vertex shader \n";
-    else std::cout << "fragment shader \n";
-    return shade;
-}
-//--------------------------------------------------------------------------------
-// Шейдерная программа
-GLuint ShaderProg::ProgLink(GLuint vShader, GLuint fShader){
-    // Создаем программу и прикрепляем шейдеры к ней
-    GLuint Program = glCreateProgram();
-    glAttachShader(Program, vShader);
-    glAttachShader(Program, fShader);
-    // Линкуем шейдерную программу
-    glLinkProgram(Program);
-    // Проверяем статус сборки
-    int link_ok;
-    glGetProgramiv(Program, GL_LINK_STATUS, &link_ok);
-    if(!link_ok)
-    {
-        std::cout << "error attach shaders \n";
-        shaderLog(vShader);
-        shaderLog(fShader);
-
-    }
-    return Program;
-}
-//--------------------------------------------------------------------------------
-void ShaderProg::AttachUniform(GLint & Unif, const char * name, GLuint Program) {
-    Unif = glGetUniformLocation(Program, name);
-    if(Unif == -1)
-    {
-        std::cout << "could not bind attrib " << name << std::endl;
-        return;
-    }
-}
-//--------------------------------------------------------------------------------
-// Функция печати лога шейдера
-void ShaderProg::shaderLog(unsigned int shader)
-{
-    int   infologLen   = 0;
-    int   charsWritten = 0;
-    char *infoLog;
-
-    glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infologLen);
-
-    if(infologLen > 1)
-    {
-        infoLog = new char[infologLen];
-        if(infoLog == NULL)
-        {
-            std::cout<<"ERROR: Could not allocate InfoLog buffer\n";
-            exit(1);
-        }
-        glGetShaderInfoLog(shader, infologLen, &charsWritten, infoLog);
-        std::cout<< "InfoLog: " << infoLog << "\n\n\n";
-        delete[] infoLog;
-    }
-}
-//--------------------------------------------------------------------------------
-// Прикрепление массива аттрибутов
-void ShaderProg::AttachAttrs(GLint & Attr ,const char* attr_name,GLuint Program) {
-    // Вытягиваем ID атрибута из собранной программы
-    Attr = glGetAttribLocation(Program, attr_name);
-    if(Attr == -1)
-    {
-        std::cout << "could not bind attrib " << attr_name << std::endl;
-        return;
-    }
-}
-//--------------------------------------------------------------------------------
-/*template<int sur_size>*/ void ShaderProg::render(/*Surface<sur_size>*/ Plottable * surf, Viewer * view, Texture * tex ){
-    glUseProgram(sprog);
-    tex->use_texture(/*tex_length*/);
-    load_mvp(view->calc_mvp(), view->calc_itmvp());
-    loadclip(view->get_vmin(), view->get_vmax());
-    surf->plot(vattr,nattr,cattr,unif_minmax);
-    glUseProgram(0);
-}
-///*template<int sur_size>*/ void ShaderProg::render(/*Surface<sur_size>*/ Plottable * surf, Viewer * view){
-//    glUseProgram(sprog);
-//    //tex->use_texture(tex_length);
-//    load_mvp(view->calc_mvp());
-//    loadclip(view->get_vmin(), view->get_vmax());
-//    surf->plot_index(vattr,nattr,cattr,unif_minmax);
-//    glUseProgram(0);
-//}
-//template void ShaderProg::render<2>(Surface<2> * surf, Viewer * view, Texture * tex );
-//template void ShaderProg::render<4>(Surface<4> * surf, Viewer * view, Texture * tex );
-//--------------------------------------------------------------------------------
-void ShaderProg::loadclip(const glm::vec3 & vi , const glm::vec3 & va){
-    if (vmax != -1) glUniform3f( vmax, va.x,va.y,va.z);
-    if (vmin != -1) glUniform3f( vmin, vi.x,vi.y,vi.z);
-}
-//--------------------------------------------------------------------------------
-void ShaderProg::load_mvp(const glm::mat4 & MVP, const glm::mat4& itMVP){
-    if (mvp_loc != -1) glUniformMatrix4fv( mvp_loc, 1, GL_FALSE, glm::value_ptr(MVP));
-    if (it_mvp_loc != -1) glUniformMatrix4fv( it_mvp_loc, 1, GL_FALSE, glm::value_ptr(itMVP));
-}
-
-//--------------------------------------------------------------------------------
-//TEXTURES
-//--------------------------------------------------------------------------------
-Texture::Texture(const float* pal, int length){
-    tex_len = length;
-    glGenTextures(1, &textureID);
-    glGenSamplers(1, &samplerID);
-    //glBindSampler(GL_TEXTURE0, samplerID);
-    glSamplerParameteri(samplerID,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-    glSamplerParameteri(samplerID,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-    printf("gen tex sampl\n");
-    checkOpenGLerror();
-    glBindTexture(GL_TEXTURE_1D, textureID);
-    printf("bind tex sampl\n");
-    checkOpenGLerror();
-    printf("pre load tex\n");
-    glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, tex_len, 0, GL_RGB, GL_FLOAT, pal);
-    printf("load tex\n");
-    checkOpenGLerror();
-    glBindTexture(GL_TEXTURE_1D, 0);
-}
-//--------------------------------------------------------------------------------
-Texture::~Texture(){
-    glDeleteTextures(1,&textureID);
-    glDeleteSamplers(1,&samplerID);
-}
-//--------------------------------------------------------------------------------
-int Texture::get_length(){
-    return tex_len;
-}
-//--------------------------------------------------------------------------------
-//void Texture::load_texture(const float* pal, int length){
-//    this->~Texture();
-//    Texture(pal, length);
-//
-//}
-//--------------------------------------------------------------------------------
-void Texture::use_texture(/*GLint tli*/){
-    //printf("texture use begin\n");
-    //checkOpenGLerror();
-    //glEnable(GL_TEXTURE_1D);
-    //checkOpenGLerror();
-    //printf("texture enabled\n");
-    //glUniform1f(tli,(float)tex_len);
-    glActiveTexture(GL_TEXTURE0);
-    //printf("texture activated\n");
-    glBindTexture(GL_TEXTURE_1D, textureID);
-    //checkOpenGLerror();
-   // printf("texture binded\n");
-    glBindSampler(0, samplerID);
-    //checkOpenGLerror();
-    //printf("sampler activated\n");
-    //checkOpenGLerror();
-    //printf("texture use set\n");
-}
-//--------------------------------------------------------------------------------

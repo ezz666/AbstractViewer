@@ -21,8 +21,10 @@ void main() {
         gl_ClipDistance[i+3]=vmax[i] -coord[i];
     }
     co = coord;
-    z = res.z;
-    n = lighting*abs(dot(normal,(camera_light*normalize(vec4(0.0,0.0,1.0,0.0)*itMVP).xyz)+ (normal.x+normal.y+normal.z)/3.*vertical_light))/(camera_light+vertical_light);
+    vec3 center = (vmin+vmax)*0.5;
+    z = (dot((coord -center),normalize(vec4(0.,0.,1.,0.0)*itMVP).xyz))/(distance(vmax,vmin));
+    n = lighting*abs(dot(normal,(camera_light*normalize(vec4(0.0,0.0,1.0,0.0)*itMVP).xyz)+
+                (normal.x+normal.y+normal.z)/3.*vertical_light))/(camera_light+vertical_light);
     c = (color-minmaxmul.x)/(minmaxmul.y - minmaxmul.x);
     gl_Position = res;
 }

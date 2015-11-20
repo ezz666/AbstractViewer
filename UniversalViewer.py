@@ -10,7 +10,7 @@ from aivlib.vctf3 import *
 #from collections import MutableMapping
 import time
 from async_input import *
-from viewer import *
+from mview import *
 from string import Formatter
 
 KeysList = " `1234567890qwertyuiop[]asdfghjkl;'xcvbnm,,./~!@#$%^&*()_-+QWERTYUIOP{}ASDFGHJKL:\"|\\ZXCVBNM<>?"
@@ -37,19 +37,19 @@ def func2string(func):
 #(self, func, key,   modificators = [], key_pressed = [],up = False)
 DefaultKeyMapping = [ ("next()", " "), ("jump(-1)"," ", ["Shift"]),
         ("keyhelp()","h",["Shift"]), ("exit()", "q",["Shift"]),("keyhelp()","h"), ("exit()", "q"),
-        ("rangemove(0.1,True)","+",["Ctrl"]), ("rangemove(0.1,True)","+",["Ctrl","Shift"]),
-        ("extendrange(0.2)","-",["Ctrl"]), ("extendrange(0.2)","-",["Ctrl","Shift"]),
-        ("rangemove(1/1.1-1.0,True)","{",["Shift"]), ("rangemove(1/1.1-1.0,True)","{"),
-        ("rangemove(1/1.1-1.0,False)","}",["Shift"]), ("rangemove(1/1.1-1.0,False)","}"),
-        ("rangemove(0.1,True)","[",["Shift"]), ("rangemove(0.1,True)","["),
-        ("rangemove(0.1,False)","]",["Shift"]), ("rangemove(0.1,False)","]"),
-        ("autoscalecb()","a"), ("autoscalecb()","a",["Shift"]),
+        #("rangemove(0.1,True)","+",["Ctrl"]), ("rangemove(0.1,True)","+",["Ctrl","Shift"]),
+        #("extendrange(0.2)","-",["Ctrl"]), ("extendrange(0.2)","-",["Ctrl","Shift"]),
+        #("rangemove(1/1.1-1.0,True)","{",["Shift"]), ("rangemove(1/1.1-1.0,True)","{"),
+        #("rangemove(1/1.1-1.0,False)","}",["Shift"]), ("rangemove(1/1.1-1.0,False)","}"),
+        #("rangemove(0.1,True)","[",["Shift"]), ("rangemove(0.1,True)","["),
+        #("rangemove(0.1,False)","]",["Shift"]), ("rangemove(0.1,False)","]"),
+        #("autoscalecb()","a"), ("autoscalecb()","a",["Shift"]),
         ("autoscale()","A"), ("autoscale()","A",["Shift"]),
         ("saveimage(get_image_name())","s"), ("saveimage(get_image_name())","s",[ "Shift" ]),
         ("toggle_wire()","w"), ("toggle_wire()","w",["Shift"]),
         ("ax^=True","c"), ("ax^=True","c",["Shift"]),
-        ("set_item((get_item()+1)%get_appends_len())",">",["Shift"]),
-        ("set_item((get_item()+get_appends_len() -1)%get_appends_len())","<",["Shift"]),
+        #("set_item((get_item()+1)%get_appends_len())",">",["Shift"]),
+        #("set_item((get_item()+get_appends_len() -1)%get_appends_len())","<",["Shift"]),
         ("rotate(-10,0)", GLUT_KEY_LEFT), ("rotate(10,0)", GLUT_KEY_RIGHT),
         ("rotate(0,-10)", GLUT_KEY_UP), ("rotate(0,10)", GLUT_KEY_DOWN),
         ("zoom(10)", GLUT_KEY_UP,["Ctrl"]), ("zoom(-10)", GLUT_KEY_DOWN, ["Ctrl"]),
@@ -135,9 +135,10 @@ class UniversalViewer:
             return getattr(self, key)
         except AttributeError:
             try:
+                #print "get_"+key
                 return getattr(self,"get_"+key)()
             except AttributeError:
-                raise KeyError(key)
+                raise KeyError("get_"+key)
     #def __iter__(self):
     #    return iter(self.namespace)
     #def __len__(self):
