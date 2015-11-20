@@ -36,15 +36,15 @@ class Axis: public Plottable{
     void plot(ShaderProg * spr);
 };
 //------------------------------------------------------------------------------
-template <class T> class SurfTemplate: public Plottable {
+class SurfTemplate: public Plottable {
     protected:
         GLint unif_minmax;
         glm::vec3 minmaxmul;
         std::vector<glm::vec3> triangles;
-        std::vector<T> appends;
+        std::vector<float> appends;
         std::vector<unsigned int> select;
-        SurfTemplate<T>(): Plottable(), auto_select(true){};
-        ~SurfTemplate<T>(){};
+        SurfTemplate(): Plottable(), auto_select(true){};
+        ~SurfTemplate(){};
     public:
         bool auto_select;
         //------------------------------------------------------------------------------
@@ -67,56 +67,5 @@ template <class T> class SurfTemplate: public Plottable {
         virtual void attach_shader(ShaderProg * spr)=0;
         //------------------------------------------------------------------------------
 };
-//------------------------------------------------------------------------------
-// SurfTemplate<T>
-//------------------------------------------------------------------------------
-template<class T> void SurfTemplate<T>::plot(ShaderProg * spr) {
-    int Ntr = select.size();
-    attach_shader(spr); // Возможно оверкил делать это каждый раз
-    glBindVertexArray(VAO);
-    //glDrawElements(GL_TRIANGLES, Ntr, GL_UNSIGNED_INT, (void *)0);
-    glDrawElementsInstanced(GL_TRIANGLES, Ntr, GL_UNSIGNED_INT, (void *)0, 1);
-    glBindVertexArray(0);
-    //glDisableVertexAttribArray(vattr);
-    //glDisableVertexAttribArray(cattr);
-    //glDisableVertexAttribArray(nattr);
-    //glBindBuffer(GL_ARRAY_BUFFER,0);
-}
-//------------------------------------------------------------------------------
-template<class T> float SurfTemplate<T>::min(){
-    return minmaxmul[0];
-}
-//------------------------------------------------------------------------------
-template<class T> float SurfTemplate<T>::max(){
-    return minmaxmul[1];
-}
-//------------------------------------------------------------------------------
-template<class T> void SurfTemplate<T>::rangemove(float shift,bool l){
-    float &min = minmaxmul[0];
-    float &max = minmaxmul[1];
-    float len = max - min;
-    if (l) min -= shift * len;
-    else max += shift * len;
-}
-//------------------------------------------------------------------------------
-template<class T> void SurfTemplate<T>::extendrange(float factor){
-    float &min = minmaxmul[0];
-    float &max = minmaxmul[1];
-    float &mul = minmaxmul[2];
-    float len_2 = (max - min)*0.5f,
-          center = (min + max)* 0.5f;
-    min = center - len_2*factor;
-    max = center + len_2*factor;
-    mul = (min != max)? 1.f/(max  - min): 1.f;
-}
-//------------------------------------------------------------------------------
-template<class T> void SurfTemplate<T>::refill_select(){
-    int NTR = get_cells_size();
-    select.clear();
-    select.resize(NTR*3);
-    for(auto i=0; i < select.size(); i++) select[i] = i;
-}
-//------------------------------------------------------------------------------
-//SurfTemplate<double>;
 //------------------------------------------------------------------------------
 #endif //PLOTTABLE

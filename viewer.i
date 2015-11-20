@@ -22,7 +22,7 @@ __makefile__='Makefile'
 %typemap(out) double& %{ $result = PyFloat_FromDouble ( *$1 ); %}
 %feature("autodoc","1");
 %inline %{namespace aiv{}; %}
-
+%include "carrays.i";
 %ignore data_header; %ignore base_data;
 %{
 #include <aivlib/indexD.hpp>
@@ -50,7 +50,5 @@ __makefile__='Makefile'
 %include "shaderprog.hpp"
 %include "viewer_template.hpp"
 %include "plottable.hpp"
-%include "carrays.i"
-%array_class(float, float_array);
 %pythoncode%{ from aivlib.mystream import *; %}
-
+%array_class(float, float_array);

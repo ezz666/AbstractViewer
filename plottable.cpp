@@ -79,3 +79,53 @@ void Axis::plot(ShaderProg * spr) {
     //glDisableVertexAttribArray(nattr);
     //glBindBuffer(GL_ARRAY_BUFFER,0);
 }
+//------------------------------------------------------------------------------
+// SurfTemplate
+//------------------------------------------------------------------------------
+void SurfTemplate::plot(ShaderProg * spr) {
+    int Ntr = select.size();
+    attach_shader(spr); // Возможно оверкил делать это каждый раз
+    glBindVertexArray(VAO);
+    //glDrawElements(GL_TRIANGLES, Ntr, GL_UNSIGNED_INT, (void *)0);
+    glDrawElementsInstanced(GL_TRIANGLES, Ntr, GL_UNSIGNED_INT, (void *)0, 1);
+    glBindVertexArray(0);
+    //glDisableVertexAttribArray(vattr);
+    //glDisableVertexAttribArray(cattr);
+    //glDisableVertexAttribArray(nattr);
+    //glBindBuffer(GL_ARRAY_BUFFER,0);
+}
+//------------------------------------------------------------------------------
+float SurfTemplate::min(){
+    return minmaxmul[0];
+}
+//------------------------------------------------------------------------------
+float SurfTemplate::max(){
+    return minmaxmul[1];
+}
+//------------------------------------------------------------------------------
+void SurfTemplate::rangemove(float shift,bool l){
+    float &min = minmaxmul[0];
+    float &max = minmaxmul[1];
+    float len = max - min;
+    if (l) min -= shift * len;
+    else max += shift * len;
+}
+//------------------------------------------------------------------------------
+void SurfTemplate::extendrange(float factor){
+    float &min = minmaxmul[0];
+    float &max = minmaxmul[1];
+    float &mul = minmaxmul[2];
+    float len_2 = (max - min)*0.5f,
+          center = (min + max)* 0.5f;
+    min = center - len_2*factor;
+    max = center + len_2*factor;
+    mul = (min != max)? 1.f/(max  - min): 1.f;
+}
+//------------------------------------------------------------------------------
+void SurfTemplate::refill_select(){
+    int NTR = get_cells_size();
+    select.clear();
+    select.resize(NTR*3);
+    for(unsigned int i=0; i < select.size(); i++) select[i] = i;
+}
+//------------------------------------------------------------------------------
