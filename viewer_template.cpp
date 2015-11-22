@@ -74,12 +74,12 @@ void Viewer::mouse_click(int button, int state, int x, int y){
        // glm::quat rot_tmp;
       //  if (right_click){
             glm::quat quatx = glm::angleAxis(rotx*Sens, glm::vec3(1.f,0.f,0.f));
-            glm::quat rot_tmp = glm::angleAxis(roty*Sens, quatx * glm::vec3(0.f,1.f,0.f) /* quatx*/) *
+            glm::quat rot_tmp = glm::angleAxis(roty*Sens, quatx * glm::vec3(0.f,-1.f,0.f) /* quatx*/) * // y is inversed
                 quatx ;
     //    } else rot_tmp = glm::quat(0.f,0.f,0.f,1.f);
         pos =  tr*scale - glm::vec3(0.f,0.f,scale) +
                 rot_tmp*(pos+glm::vec3(0.f,0.f,scale));
-        tr.x=0.f; tr.y =0.f; tr.z =0.f;
+        //tr.x=0.f; tr.y =0.f; tr.z =0.f;
         tr = glm::vec3(0.f);
         left_click = false;
         calc_mvp();
@@ -92,7 +92,7 @@ void Viewer::mouse_click(int button, int state, int x, int y){
     }
     if (button ==GLUT_RIGHT_BUTTON && state == GLUT_UP){
         glm::quat quatx = glm::angleAxis(rotx*Sens , glm::vec3(1,0,0));
-        glm::quat rot_tmp = glm::angleAxis(roty*Sens, quatx * glm::vec3(0.f,1.f,0.f) /* quatx*/) *
+        glm::quat rot_tmp = glm::angleAxis(roty*Sens, quatx * glm::vec3(0.f,-1.f,0.f) /* quatx*/) * // y is inversed
                 quatx ;
         orient = rot_tmp * orient;
         pos = rot_tmp * ( pos+glm::vec3(0.f,0.f,scale))- glm::vec3(0.f,0.f,scale);
@@ -111,8 +111,8 @@ void Viewer::mouse_click(int button, int state, int x, int y){
         scale *= 0.9;
         reshape(width,height);
     } else if (button == 4&& state == GLUT_DOWN){
-        pos -= glm::vec3(0.f,0.f,scale*0.1);
         scale /=0.9;
+        pos -= glm::vec3(0.f,0.f,scale*0.1);
         reshape(width,height);
     }
 }
@@ -122,7 +122,7 @@ void Viewer::drag(int x, int y){
         float px = ((float)x)/min_size*2;
         float py = ((float)y)/min_size*2;
         tr.x = px -tr0.x;
-        tr.y = -py+tr0.y;
+        tr.y = py -tr0.y;
         calc_mvp();
     }
     if (right_click){
@@ -186,10 +186,10 @@ Viewer::Viewer(){
     left_click = false; right_click = false;
     wire = false;
     width = 900; height = 900;
-    orient =glm::quat(glm::vec3(0.,-M_PI_2,-M_PI_2));
+    orient =glm::quat(glm::vec3(0.,M_PI_2,-M_PI_2));
         //glm::angleAxis(-(float)M_PI*0.5f*Sens,glm::vec3(1.f,0.f,0.f)) *
         //glm::angleAxis(-(float)M_PI*0.5f*Sens,glm::vec3(0.f,0.f,1.f));
-    ort = glm::ortho(-1,1,-1,1,-6,6);
+    ort = glm::ortho(-1,1,1,-1,-1,1); //y axis is inverted
     axis_sw = false;
     //inp = new std::ifstream("fronts/F");
     //spr = new ShaderProg();
@@ -209,7 +209,7 @@ Viewer::~Viewer(){
 //--------------------------------------------------------------------------------
 const glm::mat4 Viewer::calc_mvp(){
     glm::quat quatx = glm::angleAxis(rotx*Sens, glm::vec3(1.f,0.f,0.f));
-    glm::quat rot_tmp = glm::angleAxis(roty*Sens, quatx * glm::vec3(0.f,1.f,0.f) /* quatx*/) *
+    glm::quat rot_tmp = glm::angleAxis(roty*Sens, quatx * glm::vec3(0.f,-1.f,0.f) /* quatx*/) * // y is inversed
                 quatx ;
 //    float scale_tmp = scale;//Костыль!
 //    scale =0.0001f;
@@ -219,7 +219,9 @@ const glm::mat4 Viewer::calc_mvp(){
             glm::toMat4( rot_tmp * orient);
     } else {
         float m = (float)std::min(width, height);
-        MVP = glm::ortho(-1.f*width/m,1.f*width/m,-1.f*height/m,1.f*height/m,-1.f,1.f) * glm::toMat4( rot_tmp * orient);
+        MVP = glm::ortho(-1.f*width/m, 1.f*width/m,
+                1.f*height/m, -1.f*height/m, // y axis is inverted
+                -1.f, 1.f) * glm::toMat4( rot_tmp * orient);
     }
     return MVP;
     //glUniformMatrix4fv( mvp_loc, 1, GL_FALSE, glm::value_ptr(MVP));
@@ -241,7 +243,7 @@ void Viewer::get_view(float & pitch, float & yaw, float & roll) const{
     yaw = view.y;
     roll = view.z;
     //std::cout<< (pitch ==0) <<" "<< (yaw == -1.5703080892562866f)<<std::endl;
-    if (pitch ==0. && yaw ==-1.5703080892562866f&& roll ==0.) roll = -M_PI_2;
+    //if (pitch ==0. && yaw ==-1.5703080892562866f&& roll ==0.) roll = -M_PI_2;
 }
 //--------------------------------------------------------------------------------
 void Viewer::set_pos(float x, float y, float z){
@@ -323,9 +325,8 @@ void Viewer::reshape(int w, int h){
     int l = min_size;
 
     ort = glm::ortho(static_cast<GLfloat>(-w*scale/l), static_cast<GLfloat>(w*scale/l),
-                    static_cast<GLfloat>(-h*scale/l), static_cast<GLfloat>(h*scale/l),
-                    static_cast<GLfloat>(-scale*sqrt(3)),
-                    static_cast<GLfloat>(scale*sqrt(3)));
+                    static_cast<GLfloat>(h*scale/l), static_cast<GLfloat>(-h*scale/l), // y axis is inverted
+                    static_cast<GLfloat>(-scale), static_cast<GLfloat>(scale));
     calc_mvp();
     glutPostRedisplay();
 }
