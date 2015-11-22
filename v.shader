@@ -4,9 +4,10 @@ in float color;
 uniform vec3 vmin, vmax;
 uniform mat4 MVP, itMVP;
 uniform vec3 minmaxmul;
+uniform vec2 viewport;
 uniform float scale;
 out float gl_ClipDistance[6];
-out float c, n, depth;
+out float c, n;
 const float lighting=0.75;
 void main() {
     const float camera_light = 0.95;
@@ -18,9 +19,9 @@ void main() {
     }
     vec3 center = (vmin+vmax)*0.5;
     // Есои здесь передать глубину через z , то будут проблемы с растризацией
-    depth = (MVP*vec4(center-coord,0.)).z*scale/(distance(vmax,vmin)); // in [-1, 1]
+    res.z = ((MVP*vec4(center,1.)).z-res.z)*scale/(distance(vmax,vmin)); // in [-1, 1]
     n = lighting*abs(dot(normal,(camera_light*normalize(vec4(0.0,0.0,1.0,0.0)*itMVP).xyz)+
                 (normal.x+normal.y+normal.z)/3.*vertical_light))/(camera_light+vertical_light);
-    c = (color-minmaxmul.x)/(minmaxmul.y - minmaxmul.x);
+    c = (color-minmaxmul.x)*minmaxmul.z;
     gl_Position = res;
 }

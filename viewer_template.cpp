@@ -306,10 +306,12 @@ void Viewer::plot(ShaderProg * spr){
         glUniform3f(vmax, va.x,va.y,va.z);
     }
     if (vport != -1){
-        glUniform2f(vport, width, height);
+        if (!axis_sw) glUniform2f(vport, width, height);
+        else glUniform2f(vport, width/10., height/10.);
     }
     if (unif_scale != -1){
-        glUniform1f(unif_scale,scale);
+        if (!axis_sw) glUniform1f(unif_scale,scale);
+        else glUniform1f(unif_scale,1.0);
     }
 }
 //void Viewer::idle(){
