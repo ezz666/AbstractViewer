@@ -479,6 +479,9 @@ class UniversalViewer:
         #    print "inpu command %s"%com
         if self.ax:
             self.V.axis_switch()
+            GL.glDepthFunc(GL.GL_GREATER) # Overdraw)
+            self.spr.render(self.Axis, self.V, self.palettes["rgb"])
+            GL.glDepthFunc(GL.GL_LEQUAL)
             self.spr.render(self.Axis, self.V, self.palettes["rgb"])
             self.V.axis_switch()
     def display(self):
