@@ -12,6 +12,7 @@ import time
 from async_input import *
 from viewer import *
 from string import Formatter
+from math import *
 
 KeysList = " `1234567890qwertyuiop[]asdfghjkl;'xcvbnm,,./~!@#$%^&*()_-+QWERTYUIOP{}ASDFGHJKL:\"|\\ZXCVBNM<>?"
 SpecialKeysList = [GLUT_KEY_F1, GLUT_KEY_F2, GLUT_KEY_F3,
@@ -257,7 +258,7 @@ class UniversalViewer:
         self.tex = self.palettes[pal_name]
         self.cur_pal = pal_name
     def set_view(self,pitch, yaw, roll):
-        "Устанавливает вид по углам Эйлера"
+        "Устанавливает вид по углам Эйлера порядок y z y"
         self.V.set_view(pitch,yaw,roll)
     def set_pos(self, x, y, z):
         "Устанавливает смещение"

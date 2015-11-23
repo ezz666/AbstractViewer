@@ -12,16 +12,16 @@ const float lighting=0.75;
 void main() {
     const float camera_light = 0.95;
     const float vertical_light = 0.05;
-    vec4 res = MVP*vec4(coord,1.0);
+    vec4 res = MVP*vec4(coord,1.0); // It's recomended to use right multiplication, I wonder why
     for(int i =0; i<3; i++){
         gl_ClipDistance[i]=coord[i]- vmin[i];
         gl_ClipDistance[i+3]=vmax[i] -coord[i];
     }
     vec3 center = (vmin+vmax)*0.5;
-    // Есои здесь передать глубину через z , то будут проблемы с растризацией
-    res.z = ((MVP*vec4(center,1.)).z-res.z)*scale/(distance(vmax,vmin)); // in [-1, 1]
-    n = lighting*abs(dot(normal,(camera_light*normalize(vec4(0.0,0.0,1.0,0.0)*itMVP).xyz)+
-                (normal.x+normal.y+normal.z)/3.*vertical_light))/(camera_light+vertical_light);
+
+    res.z = 2*((MVP*vec4(center,1.)).z-res.z)*scale/(distance(vmax,vmin)); // in [-1, 1]
+    n = lighting*abs(camera_light*(itMVP*vec4(normal,0.)).z / scale +
+                (normal.x+normal.y+normal.z)/3.*vertical_light)/(camera_light+vertical_light);
     c = (color-minmaxmul.x)*minmaxmul.z;
     gl_Position = res;
 }

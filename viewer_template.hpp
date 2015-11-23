@@ -48,12 +48,13 @@ struct vertex{
 //--------------------------------------------------------------------------------
 class Viewer{
     private:
-        float rotx, roty, rotz;
-        float  ox, oy, oz;
+        float rotx, roty;
+        float  ox, oy;
         float scale;
         int width, height, min_size;
         int Ntr;
-        glm::vec3 tr, pos, tr0, min, max;
+        glm::vec2 tr, tr0;
+            glm::vec3 pos, min, max;
         bool left_click, right_click, wire, axis_sw;
         //GLint vattr, nattr, cattr, mvp_loc,
         //      unif_minmax;
@@ -67,6 +68,7 @@ class Viewer{
         //Surface<2> *sur;
         //std::ifstream * inp;
 //#endif //PYTHON
+        glm::quat get_rot_tmp() const;
     public:
         //ShaderProg * spr;
         //void rescale(float mult);
@@ -74,7 +76,6 @@ class Viewer{
         ~Viewer();
         //--------------------------------------------------------------------------------
         // functions for user
-        void create_model();
         float get_scale() const;
         void axis_switch();
         void get_pos(float* p);

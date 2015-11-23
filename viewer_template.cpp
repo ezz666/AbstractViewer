@@ -15,44 +15,6 @@ void checkOpenGLerror()
     if((errCode=glGetError()) != GL_NO_ERROR)
         std::cout << "OpenGl error! - " << gluErrorString(errCode)<<std::endl;
 }
-//Для простоты это будет октаэдр
-void Viewer::create_model(){
-    //free_BO();
-    //if (sur){delete sur;};
-    //sur = new Surface<2>();
-    //sur->load(*inp);
-    //sur->load_on_device(1);
-    //checkOpenGLerror();
-    //sur->set_minmax();
-    //delete [] normals;
-    checkOpenGLerror();
-}
-//--------------------------------------------------------------------------------
-//void Viewer::free_BO(){
-//    checkOpenGLerror();
-//    printf("before free BO\n");
-//    printf("after free BO\n");
-//}
-////--------------------------------------------------------------------------------
-//void Viewer::set_pal(){
-//    int length = 4;
-    //tex= new(tex) Texture(pal,length);
-//    printf("before set pal\n");
-//    checkOpenGLerror();
-//    printf("in set pal\n");
-//    int length = 4;
-//    printf("before Active set pal\n");
-//    //glActiveTexture(GL_TEXTURE0);
-//    glGenTextures(1, &textureID);
-//    glBindTexture(GL_TEXTURE_1D, textureID);
-//    glTexParameteri(GL_TEXTURE_1D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-//    glTexParameteri(GL_TEXTURE_1D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-//    glTexImage1D(GL_TEXTURE_1D, 0, 3, length, 0, GL_RGB, GL_FLOAT, pal);
-//    checkOpenGLerror();
-//    glBindTexture(GL_TEXTURE_1D, 0);
-//    checkOpenGLerror();
-//    printf("after set pal\n");
-//}
 //--------------------------------------------------------------------------------
 void Viewer::togglewire() {
     set_wire(!wire);
@@ -63,56 +25,45 @@ void Viewer::set_wire(bool tf){
 }
 //--------------------------------------------------------------------------------
 //Повороты
+//--------------------------------------------------------------------------------
+glm::quat Viewer::get_rot_tmp() const {
+        glm::quat quatx = glm::angleAxis(rotx*Sens, glm::vec3(1.f,0.f,0.f));
+        return glm::angleAxis(roty*Sens, quatx * glm::vec3(0.f,1.f,0.f) /* quatx*/) * // y is inversed
+            quatx ;
+}
+//--------------------------------------------------------------------------------
 void Viewer::mouse_click(int button, int state, int x, int y){
     if (button ==GLUT_LEFT_BUTTON && state == GLUT_DOWN){
         tr0.x = ((float)x)/min_size*2;
         tr0.y = ((float)y)/min_size*2;
-        tr0.z = tr0.z;
         left_click = true;
     }
     if (button == GLUT_LEFT_BUTTON && state == GLUT_UP){
-       // glm::quat rot_tmp;
-      //  if (right_click){
-            glm::quat quatx = glm::angleAxis(rotx*Sens, glm::vec3(1.f,0.f,0.f));
-            glm::quat rot_tmp = glm::angleAxis(roty*Sens, quatx * glm::vec3(0.f,-1.f,0.f) /* quatx*/) * // y is inversed
-                quatx ;
-    //    } else rot_tmp = glm::quat(0.f,0.f,0.f,1.f);
-        pos =  tr*scale - glm::vec3(0.f,0.f,scale) +
-                rot_tmp*(pos+glm::vec3(0.f,0.f,scale));
-        //tr.x=0.f; tr.y =0.f; tr.z =0.f;
-        tr = glm::vec3(0.f);
+        auto rot_tmp = get_rot_tmp();
+        pos -= inverse(orient*rot_tmp)* glm::vec3(tr*scale,0.f);
+        tr = glm::vec2(0.f);
         left_click = false;
-        calc_mvp();
     }
     if (button ==GLUT_RIGHT_BUTTON && state == GLUT_DOWN){
         ox = ((float)x)/min_size*2;
         oy = ((float)y)/min_size*2;
-        oz = 0.f;
         right_click = true;
     }
     if (button ==GLUT_RIGHT_BUTTON && state == GLUT_UP){
-        glm::quat quatx = glm::angleAxis(rotx*Sens , glm::vec3(1,0,0));
-        glm::quat rot_tmp = glm::angleAxis(roty*Sens, quatx * glm::vec3(0.f,-1.f,0.f) /* quatx*/) * // y is inversed
-                quatx ;
+        auto rot_tmp = get_rot_tmp();
         orient = rot_tmp * orient;
-        pos = rot_tmp * ( pos+glm::vec3(0.f,0.f,scale))- glm::vec3(0.f,0.f,scale);
-        //Учесть трансформацию вектора
-        rotx = 0.f; roty = 0.f; rotz = 0.f;
-        ox = 0.f; oy = 0.f; oz = 0.f;
+        rotx = 0.f; roty = 0.f;
+        ox = 0.f; oy = 0.f;
         right_click = false;
-        calc_mvp();
     }
-    //if (button ==GLUT_MIDDLE_BUTTON&& state == GLUT_DOWN){
-    //    autoscale();
-    //    reshape(width,height);
-    //}
     if (button ==3&& state == GLUT_DOWN){
-        pos += glm::vec3(0.f,0.f,scale*0.1);
+        //нужно подумать
+        //pos += glm::vec3(0.f,0.f,scale*0.1);
         scale *= 0.9;
         reshape(width,height);
     } else if (button == 4&& state == GLUT_DOWN){
         scale /=0.9;
-        pos -= glm::vec3(0.f,0.f,scale*0.1);
+        //pos -= glm::vec3(0.f,0.f,scale*0.1);
         reshape(width,height);
     }
 }
@@ -123,17 +74,16 @@ void Viewer::drag(int x, int y){
         float py = ((float)y)/min_size*2;
         tr.x = px -tr0.x;
         tr.y = py -tr0.y;
-        calc_mvp();
+        //calc_mvp();
     }
     if (right_click){
         float px = ((float)x)/min_size*2;
         float py = ((float)y)/min_size*2;
         //rotx=0;
-        rotz = 0.;
         rotx = glm::degrees((py - oy) * 4*M_PI/180.f);
         roty = glm::degrees((px - ox) * 4*M_PI/180.f);
         //rotate(ox,py,px);
-        calc_mvp();
+        //calc_mvp();
     }
     glutPostRedisplay();
 }
@@ -166,66 +116,36 @@ void Viewer::clip_plane_move(float shift, int num){
 }
 //--------------------------------------------------------------------------------
 Viewer::Viewer(){
-    //Может это вообще перенести в python?
-    //это разумно вообще
-    //с другой стороны концепция один вьюер — одно окно,
-    //никуда не делась
-    //с третьей стороны если привязку клавиш делать из питона все равно
-    //эффективной разницы не будет.
-    //Итого: Это все переносим в python
-    //класс нужен для хранения всяких переменных и т.д.
-    //в pythonего стоит ещё раз обернуть, если мы хотим
-    //простой работы со всем получившимся
-    //sur = NULL;
-    rotx=0.0f; roty=0.0f; rotz=0.0f;
-    ox = 0.f; oy = 0.f; oz = 0.f;
+    rotx=0.0f; roty=0.0f;
+    ox = 0.f; oy = 0.f;
     scale = 1.f;
-    pos = glm::vec3(0.f); pos.z = -scale;
-    tr = glm::vec3(0.f); tr0 = glm::vec3(0.f);
+    pos = glm::vec3(0.f); pos.z = 0.f;
+    tr = glm::vec2(0.f); tr0 = glm::vec2(0.f);
     min=glm::vec3(0.); max=glm::vec3(0.);
     left_click = false; right_click = false;
     wire = false;
     width = 900; height = 900;
-    orient =glm::quat(glm::vec3(0.,M_PI_2,-M_PI_2));
-        //glm::angleAxis(-(float)M_PI*0.5f*Sens,glm::vec3(1.f,0.f,0.f)) *
-        //glm::angleAxis(-(float)M_PI*0.5f*Sens,glm::vec3(0.f,0.f,1.f));
-    ort = glm::ortho(-1,1,1,-1,-1,1); //y axis is inverted
+    //orient =glm::quat(glm::vec3(0.,M_PI_2,-M_PI_2));
+    //orient =glm::quat(glm::vec3(-M_PI_2,-M_PI_2,0.f)); // real order x z x
+    orient =glm::quat(glm::vec3(-M_PI_2,-M_PI_2,0.f)); // real order x z x
+    ort = glm::ortho(-1,1,-1,1,1,-1); //z is also inverted by glm
     axis_sw = false;
-    //inp = new std::ifstream("fronts/F");
-    //spr = new ShaderProg();
-    //tex = new Texture();
-   // spr->extern_load("v.shader","f.shader");
 }
 //--------------------------------------------------------------------------------
 Viewer::~Viewer(){
-    //if (inp) delete inp;
-    //if (sur) delete sur;
-    //if (tex) delete tex;
-    //if (spr) delete spr;
-    //free_BO();
-    //glDeleteProgram(sprog);
-    //exit(0);
+    // there is nithing to clean;
 }
 //--------------------------------------------------------------------------------
 const glm::mat4 Viewer::calc_mvp(){
-    glm::quat quatx = glm::angleAxis(rotx*Sens, glm::vec3(1.f,0.f,0.f));
-    glm::quat rot_tmp = glm::angleAxis(roty*Sens, quatx * glm::vec3(0.f,-1.f,0.f) /* quatx*/) * // y is inversed
-                quatx ;
-//    float scale_tmp = scale;//Костыль!
-//    scale =0.0001f;
+    auto rot_tmp = get_rot_tmp();
     if (! axis_sw){
-        MVP = ort * glm::translate(tr*scale - glm::vec3(0.f,0.f,scale) +
-                rot_tmp*(pos+glm::vec3(0.f,0.f,scale))) *
-            glm::toMat4( rot_tmp * orient);
+        MVP = glm::translate(ort, glm::vec3(tr*scale,0.f))* glm::translate(glm::toMat4( rot_tmp * orient), -pos);
     } else {
         float m = (float)std::min(width, height);
-        MVP = glm::ortho(-1.f*width/m, 1.f*width/m,
-                1.f*height/m, -1.f*height/m, // y axis is inverted
-                -1.f, 1.f) * glm::toMat4( rot_tmp * orient);
+        MVP = glm::ortho(-1.f*width/m, 1.f*width/m, -1.f*height/m, 1.f*height/m,
+                1.f, -1.f) * glm::toMat4( rot_tmp * orient); // z also inverted by glm
     }
     return MVP;
-    //glUniformMatrix4fv( mvp_loc, 1, GL_FALSE, glm::value_ptr(MVP));
-//    scale =scale_tmp;
 }
 const glm::mat4 Viewer::calc_itmvp() const{
     if (!axis_sw){
@@ -235,15 +155,13 @@ const glm::mat4 Viewer::calc_itmvp() const{
 }
 //--------------------------------------------------------------------------------
 void Viewer::set_view(float pitch, float yaw, float roll){
-    orient = glm::quat(glm::vec3(pitch, yaw, roll));
+    orient = glm::quat(glm::vec3(pitch, yaw, roll))*glm::quat(glm::vec3(-M_PI_2,-M_PI_2,0.f));
 }
 void Viewer::get_view(float & pitch, float & yaw, float & roll) const{
-    const glm::vec3 view = glm::eulerAngles(orient);
+    const glm::vec3 view = glm::eulerAngles(orient*inverse(glm::quat(glm::vec3(-M_PI_2,-M_PI_2,0.f))));
     pitch =view.x;
     yaw = view.y;
     roll = view.z;
-    //std::cout<< (pitch ==0) <<" "<< (yaw == -1.5703080892562866f)<<std::endl;
-    //if (pitch ==0. && yaw ==-1.5703080892562866f&& roll ==0.) roll = -M_PI_2;
 }
 //--------------------------------------------------------------------------------
 void Viewer::set_pos(float x, float y, float z){
@@ -271,15 +189,6 @@ void Viewer::display(){
     glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
     glClearDepth(1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
- //   set_pal();
- //   GLint samp = glGetUniformLocation(spr->sprog, "pal");
- //   glUniform1i(samp, 0);
-    //spr->load_mvp(MVP);
-    //tex->use_texture();
-    //spr->render(sur,MVP);
-    //glBindBuffer(GL_ARRAY_BUFFER,0);
-    //glutSwapBuffers();
-   // free_BO();
 }
 //--------------------------------------------------------------------------------
 void Viewer::plot(ShaderProg * spr){
@@ -314,33 +223,22 @@ void Viewer::plot(ShaderProg * spr){
         else glUniform1f(unif_scale,1.0);
     }
 }
-//void Viewer::idle(){
-//}
 //--------------------------------------------------------------------------------
 void Viewer::reshape(int w, int h){
     glViewport(0, 0, w, h);
     width = w; height = h;
-    //int l =
     min_size = std::min(w, h);
-    //float max_size = std::max(w,h);
 
     int l = min_size;
 
-    ort = glm::ortho(static_cast<GLfloat>(-w*scale/l), static_cast<GLfloat>(w*scale/l),
-                    static_cast<GLfloat>(h*scale/l), static_cast<GLfloat>(-h*scale/l), // y axis is inverted
-                    static_cast<GLfloat>(-scale), static_cast<GLfloat>(scale));
-    calc_mvp();
+    ort = glm::ortho(-w*scale/l, w*scale/l, -h*scale/l, h*scale/l,
+                    scale, -scale); //z is inverted by glm
     glutPostRedisplay();
 }
 //--------------------------------------------------------------------------------
-//void Viewer::rescale(float mult){
-//    if (mult*scale !=0 ) scale *= mult;
-//}
-//--------------------------------------------------------------------------------
 void Viewer::axis_switch(){
-    int sf = axis_sw?1:10;
-    glViewport(0, 0, width/sf, height/sf);
     axis_sw = !axis_sw;
+    int sf = axis_sw?10:1; glViewport(0, 0, width/sf, height/sf);
 }
 //--------------------------------------------------------------------------------
 float Viewer::get_scale() const{
@@ -397,58 +295,11 @@ std::string Viewer::get_command(){
     return com;
 }
 //--------------------------------------------------------------------------------
-//template<class T> void Viewer::setminmax(SurfTemplate<T> * Sur){
-//    const glm::vec3 * triangles = Sur->get_triangles();
-//    if (Sur->get_cells_size() == 0) return ;
-//    min = triangles[0];
-//    max = triangles[0];
-//    for(int j = 0 ; j < Sur->get_cells_size()*3; j++){
-//        const glm::vec3 & coords = triangles[j];
-//        for(int i = 0; i<3; i++){
-//            min[i] = std::min(min[i], coords[i]);
-//            max[i] = std::max(max[i], coords[i]);
-//        }
-//        //std::cout<<glm::to_string(coords)<<std::endl;
-//    //    cent += coords;
-//    }
-//}
-//template void Viewer::setminmax<float>(SurfTemplate<float> * Sur);
-//template void Viewer::setminmax<2>(Surface<2> * Sur);
-//template void Viewer::setminmax<4>(Surface<4> * Sur);
-//--------------------------------------------------------------------------------
-// Не хочу поворачивать все вектора, автоскэйл будет ещё и сбрасывать поворот.
-// а ладно scale не будет от них зависеть!
-
-//template <class T> void Viewer::autoscale(SurfTemplate<T> * Sur){
-//    setminmax(Sur);
-//    glm::vec3 cent = (max + min)*0.5f;
-//    scale = glm::distance(cent, max);
-//    //cent*= 1./(Sur->get_cells_size()*3.);
-//    //for(int j = 0 ; j < Sur->get_cells_size()*3; j++){
-//    //    const glm::vec3 & coords = triangles[j];
-//    //    dist = std::max(glm::distance(coords,cent),dist);
-//    //    //std::cout<<glm::to_string(coords)<<std::endl;
-//    //    //cent += coords;
-//    //}
-//    //std::cout<<scale<<" "<<glm::to_string(pos)<<std::endl;
-//    //std::cout<<glm::to_string(min)<<" | "<<glm::to_string(cent)<<std::endl;
-//    //std::cout<<glm::to_string(max)<<" | "<<glm::to_string(cent)<<std::endl;
-//    //orient =glm::angleAxis(-(float)M_PI*0.5f,glm::vec3(1.f,0.f,0.f));
-//    pos = -cent*glm::inverse(orient);
-//    //scale = std::max(glm::distance(min, cent), glm::distance(max, cent));
-//    //scale = dist;
-//    if (scale == 0.f) scale = 1.f;
-//
-//    pos -= glm::vec3(0.f, 0.f, scale);
-//    std::cout<<scale<<" "<<glm::to_string(pos)<<std::endl;
-//    reshape(width, height);
-//}
 void Viewer::automove(){
     glm::vec3 cent = (max + min)*0.5f;
     scale = glm::distance(cent, max);
-    pos = -cent*glm::inverse(orient);
+    pos = cent;
     if (scale == 0.f) scale = 1.f;
-    pos -= glm::vec3(0.f, 0.f, scale);
     //std::cout<<scale<<" "<<glm::to_string(pos)<<std::endl;
     reshape(width, height);
 }
