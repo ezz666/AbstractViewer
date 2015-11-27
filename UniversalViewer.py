@@ -9,6 +9,8 @@ from OpenGL import GL
 from aivlib.vctf3 import *
 #from collections import MutableMapping
 import time
+import signal
+import threading
 from async_input import *
 from viewer import *
 from string import Formatter
@@ -64,8 +66,9 @@ SurfTemplateKeys =  [ ("extendrange(1.1)","+",["Ctrl"]), ("extendrange(1.1)","+"
 class UniversalViewer:
     def __init__(self, argv):
         glutInitContextVersion(3,3)
-        self.V = Viewer()
+        glutInitContextProfile(GLUT_CORE_PROFILE)
         glutInit(argv)
+        self.V = Viewer()
         glutInitWindowSize(self.V.get_width(), self.V.get_height())
         glutInitDisplayMode(GLUT_RGBA|GLUT_DOUBLE|GLUT_DEPTH)
         glutCreateWindow("viewer")
@@ -84,11 +87,13 @@ class UniversalViewer:
         print "After axis"
         checkOpenGLerror()
         self.rl_reader = rl_async_reader(os.path.expanduser("~/.UniversalViewer"))
+        #self.command_queue = self.rl_reader.q
         #self.rl_reader.set_completer(self.__class__.__dict__)
         self.Axis.load_on_device()
         print "After axis load"
         checkOpenGLerror()
         d ={}
+        self._closed = False
         for k in SpecialKeysList:
             #print k
             d[k] = []
@@ -102,7 +107,7 @@ class UniversalViewer:
         self.ax = True
         #self.cb_auto = True
         self.bb_auto = True
-        self.__async_getline()
+        #self.__async_getline()
         self.idle_actions = []
         self.title_template = "UniversalViewer scale:{scale}"
         self.image_name_template = "SC{scale}-V{view[0]}_{view[1]}_{view[2]}.png"
@@ -238,21 +243,24 @@ class UniversalViewer:
         return KeyHandler
     def help(self, myobject=None):
         "Показать справку на обьект"
+#Вот это придется конкретно переделать
         self.__help = True
+
         @threaded
         def help_thread(self, myobject):
+            self.rl_reader.lock.acquire()
             if myobject is None:
                 help(self)
             else: help(myobject)
-            self.__async_getline()
+            self.rl_reader.lock.release()
             self.__help = False
         help_thread(self,myobject)
-    def __async_getline(self):
-        "Асинхронно читает строку со стандартного ввода, служебная функция"
-        try:
-            self.com_thr = self.rl_reader.async_getline()
-        except EOFError:
-            self.exit()
+    #def __async_getline(self):
+    #    "Асинхронно читает строку со стандартного ввода, служебная функция"
+    #    try:
+    #        self.com_thr = self.rl_reader.async_getline()
+    #    except EOFError:
+    #        self.exit()
     def set_pal(self, pal_name):
         "Устанавливает палитру"
         self.tex = self.palettes[pal_name]
@@ -360,22 +368,23 @@ class UniversalViewer:
         else: self.V.mouse_click(3,GLUT_DOWN,0,0)
     def idle(self):
         "Функция idle для окна"
-        if (not self.__help and not self.com_thr.is_alive()):
-            command = self.com_thr.result_queue.get()
+        #if (not self.__help and not self.com_thr.is_alive()):
+        command = self.rl_reader.get()
+        while(command):
             try:
                 if isinstance (command, str):
                     self.execute(command)
+                    command = self.rl_reader.get()
                 else: raise command
             except (NameError, SyntaxError, TypeError):
                 import traceback
                 traceback.print_exception( *sys.exc_info())
-            except EOFError:
-                self.exit()
             except:
                 import traceback
                 traceback.print_exception( *sys.exc_info())
                 self.exit()
-            if (not self.__help and not self.com_thr.is_alive()): self.__async_getline()
+                #if (not self.__help and not self.com_thr.is_alive()): self.__async_getline()
+            #command = self.rl_reader.q.get()
         cur_time = time.time()
         for i, (name, last_time, interval, action) in enumerate(self.idle_actions):
             if cur_time-last_time>=interval:
@@ -492,7 +501,15 @@ class UniversalViewer:
         glutSwapBuffers()
     def exit(self):
         "Закрывает окно и завершает програму"
-        sys.exit()
+        if (self._closed == True): return
+        #sys.exit()
+        #sys.stdin.close()
+        os.kill(os.getpid(),signal.SIGALRM)
+        self._closed = True
+        self.rl_reader.lock.acquire()
+        self.rl_reader.lock.release()
+        glutLeaveMainLoop()
+        #self.com_thr.join()
     def keyhelp(self):
         "Выводит справку по привязкам клавиш"
 #тут не хватает нормального форматирования для комбинаций клавиш
@@ -535,5 +552,10 @@ class UniversalViewer:
         glutSpecialUpFunc(self.get_key_function( self.SpecialKeyUp))
         glutReshapeFunc(self.V.reshape)
         glutIdleFunc(self.idle)
-        glutMainLoop()
+        glutCloseFunc(self.exit)
+        t = threading.Thread(target=glutMainLoop)
+        t.start()
+        self.rl_reader()
+        t.join()
+
 

@@ -40,7 +40,7 @@ void Viewer::mouse_click(int button, int state, int x, int y){
     }
     if (button == GLUT_LEFT_BUTTON && state == GLUT_UP){
         auto rot_tmp = get_rot_tmp();
-        pos -= inverse(orient*rot_tmp)* glm::vec3(tr*scale,0.f);
+        pos -= glm::inverse(orient*rot_tmp)* glm::vec3(tr*scale,0.f);
         tr = glm::vec2(0.f);
         left_click = false;
     }
@@ -129,7 +129,19 @@ Viewer::Viewer(){
     //orient =glm::quat(glm::vec3(-M_PI_2,-M_PI_2,0.f)); // real order x z x
     orient =glm::quat(glm::vec3(-M_PI_2,-M_PI_2,0.f)); // real order x z x
     ort = glm::ortho(-1,1,-1,1,1,-1); //z is also inverted by glm
+    background = glm::vec3(1.f,1.f,1.f);
     axis_sw = false;
+    checkOpenGLerror();
+}
+//--------------------------------------------------------------------------------
+void Viewer::get_background(float &r, float &g, float &b){
+    r = background.x;
+    g = background.y;
+    b = background.z;
+}
+//--------------------------------------------------------------------------------
+void Viewer::set_background(float r, float g, float b){
+    background = glm::vec3(r, g, b);
 }
 //--------------------------------------------------------------------------------
 Viewer::~Viewer(){
@@ -158,7 +170,7 @@ void Viewer::set_view(float pitch, float yaw, float roll){
     orient = glm::quat(glm::vec3(pitch, yaw, roll))*glm::quat(glm::vec3(-M_PI_2,-M_PI_2,0.f));
 }
 void Viewer::get_view(float & pitch, float & yaw, float & roll) const{
-    const glm::vec3 view = glm::eulerAngles(orient*inverse(glm::quat(glm::vec3(-M_PI_2,-M_PI_2,0.f))));
+    const glm::vec3 view = glm::eulerAngles(orient*glm::inverse(glm::quat(glm::vec3(-M_PI_2,-M_PI_2,0.f))));
     pitch =view.x;
     yaw = view.y;
     roll = view.z;
@@ -186,7 +198,7 @@ void Viewer::get_pos(float* p){
 //}
 //--------------------------------------------------------------------------------
 void Viewer::display(){
-    glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
+    glClearColor(background.r, background.g, background.b, 0.0f);
     glClearDepth(1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }

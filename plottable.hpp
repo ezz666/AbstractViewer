@@ -19,7 +19,7 @@ class Plottable{
         GLuint VBO[4];
         GLint vattr, nattr, cattr;
         Plottable();
-        ~Plottable();
+        virtual ~Plottable();
     public:
         virtual void plot(ShaderProg * spr)=0;
         //virtual void plot_index(GLint vattr, GLint nattr, GLint cattr, GLint unif_minmax) const=0;

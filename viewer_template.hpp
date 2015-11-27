@@ -62,6 +62,7 @@ class Viewer{
         glm::mat4 MVP,ort;
         std::future<std::string> command_fut;
         GLint mvp_loc, it_mvp_loc, vmin, vmax, vport, unif_scale;
+        glm::vec3 background;
         //std::string com;
 //#ifndef PYTHON
         //Texture * tex;
@@ -76,6 +77,8 @@ class Viewer{
         ~Viewer();
         //--------------------------------------------------------------------------------
         // functions for user
+        void get_background(float & r, float & g, float & b);
+        void set_background(float r, float g, float b);
         float get_scale() const;
         void axis_switch();
         void get_pos(float* p);
