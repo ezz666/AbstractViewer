@@ -235,16 +235,19 @@ void Viewer::plot(ShaderProg * spr){
         else glUniform1f(unif_scale,1.0);
     }
 }
+
 //--------------------------------------------------------------------------------
-void Viewer::reshape(int w, int h){
+void Viewer::_reshape(int w, int h){
     glViewport(0, 0, w, h);
     width = w; height = h;
     min_size = std::min(w, h);
-
     int l = min_size;
-
     ort = glm::ortho(-w*scale/l, w*scale/l, -h*scale/l, h*scale/l,
                     scale, -scale); //z is inverted by glm
+}
+//--------------------------------------------------------------------------------
+void Viewer::reshape(int w, int h){
+    _reshape(w,h);
     glutPostRedisplay();
 }
 //--------------------------------------------------------------------------------
@@ -313,7 +316,7 @@ void Viewer::automove(){
     pos = cent;
     if (scale == 0.f) scale = 1.f;
     //std::cout<<scale<<" "<<glm::to_string(pos)<<std::endl;
-    reshape(width, height);
+    _reshape(width, height);
 }
 ////template void Viewer::autoscale<1>(Surface<1> * Sur);
 ////template void Viewer::autoscale<2>(Surface<2> * Sur);

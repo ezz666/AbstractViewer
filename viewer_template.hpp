@@ -63,6 +63,7 @@ class Viewer{
         std::future<std::string> command_fut;
         GLint mvp_loc, it_mvp_loc, vmin, vmax, vport, unif_scale;
         glm::vec3 background;
+        void _reshape(int w, int h);
         //std::string com;
 //#ifndef PYTHON
         //Texture * tex;
