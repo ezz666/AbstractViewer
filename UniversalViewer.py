@@ -10,11 +10,22 @@ from aivlib.vctf3 import *
 #from collections import MutableMapping
 import time
 import signal
+import multiprocessing
 import threading
 from async_input import *
 from viewer import *
 from string import Formatter
 from math import *
+
+def threaded(f):
+    def wrap(*args, **kwargs):
+        '''this is the function returned from the decorator. It fires off
+        wrapped_f in a new thread and returns the thread object with
+        the result queue attached'''
+        t = threading.Thread(target=f, args=args, kwargs=kwargs)
+        t.start()
+        return t
+    return wrap
 
 KeysList = " `1234567890qwertyuiop[]asdfghjkl;'xcvbnm,,./~!@#$%^&*()_-+QWERTYUIOP{}ASDFGHJKL:\"|\\ZXCVBNM<>?"
 SpecialKeysList = [GLUT_KEY_F1, GLUT_KEY_F2, GLUT_KEY_F3,
@@ -23,21 +34,14 @@ SpecialKeysList = [GLUT_KEY_F1, GLUT_KEY_F2, GLUT_KEY_F3,
         GLUT_KEY_F12, GLUT_KEY_LEFT, GLUT_KEY_UP, GLUT_KEY_RIGHT,
         GLUT_KEY_DOWN, GLUT_KEY_PAGE_UP, GLUT_KEY_PAGE_DOWN,
         GLUT_KEY_HOME, GLUT_KEY_END, GLUT_KEY_INSERT]
-#def get_arglist(func):
-#    return func.func_code.co_varnames[:func.func_code.co_argcount]
 def get_arglist(func, ommit_self = True):
     arglist = func.func_code.co_varnames[:func.func_code.co_argcount]
     if ommit_self and arglist and arglist[0]=="self": return arglist[1:]
     else: return arglist
-#def func_run(func, *args, **kwargs):
-#    arglist = get_arglist(func)
-#    return func(*[kwargs[t] for t in args+arglist ])
 def func2string(func):
     arglist = get_arglist(func)
-    #print arglist, func.func_name + '('+(" {},"*(len(arglist)-1) + ' {} ')+')' if len(arglist) >=1 else '()'
     argum =(" {},"*(len(arglist)-1) + ' {} ') if arglist else ""
     return func.func_name + '('+argum.format(*arglist)+')'
-#(self, func, key,   modificators = [], key_pressed = [],up = False)
 DefaultKeyMapping = [ ("next()", " "), ("jump(-1)"," ", ["Shift"]),
         ("keyhelp()","h",["Shift"]), ("exit()", "q",["Shift"]),("keyhelp()","h"), ("exit()", "q"),
         ("autoscale()","A"), ("autoscale()","A",["Shift"]),
@@ -73,56 +77,43 @@ class UniversalViewer:
         glutInitDisplayMode(GLUT_RGBA|GLUT_DOUBLE|GLUT_DEPTH)
         glutCreateWindow("viewer")
         self.V.GL_init()
-        #self.additional_names = {}
         self.spr = ShaderProg()
         print "before pal"
         checkOpenGLerror()
-        self.palettes = {} # names for palettes?
+        self.palettes = {}
         self.add_pal("pal", [1.,0.,0., 1.,.5,0., 1.,1.,0., 0.,1.,0., 0.,1.,1., 0.,0.,1., 1.,0.,1.])
         self.add_pal("rgb", [1.,0.,0.,0.,1.,0.,0.,0.,1.])
-        # make it simple to create pal!!
         print "After pal"
         checkOpenGLerror()
         self.Axis = Axis()
         print "After axis"
         checkOpenGLerror()
-        self.rl_reader = rl_async_reader(os.path.expanduser("~/.UniversalViewer"))
-        #self.command_queue = self.rl_reader.q
-        #self.rl_reader.set_completer(self.__class__.__dict__)
+        self.rl_reader = rl_async_reader(sys.stdin.fileno(), os.path.expanduser("~/.UniversalViewer"))
         self.Axis.load_on_device()
         print "After axis load"
         checkOpenGLerror()
         d ={}
         self._closed = False
         for k in SpecialKeysList:
-            #print k
             d[k] = []
-        #print d
         self.SpecialKeyUp = dict([ (k, []) for k in SpecialKeysList])
         self.SpecialKeyDown = dict([ (k, []) for k in SpecialKeysList])
         self.KeyUp = dict([(k, []) for k in KeysList])
         self.KeyDown = dict([(k, []) for k in KeysList])
         self.keystates = dict([(k, False) for k in KeysList])
-        #self.params = {}
         self.ax = True
-        #self.cb_auto = True
         self.bb_auto = True
-        #self.__async_getline()
         self.idle_actions = []
         self.title_template = "UniversalViewer scale:{scale}"
         self.image_name_template = "SC{scale}-V{view[0]}_{view[1]}_{view[2]}.png"
         self.set_pal("pal")
-        self.__help = False
+        self.__help = threading.RLock()
         self.buffers = {}
         self.buffer = None
         self.namespace = {}
 #--------------------------------------------------------------
     def __setattr__(self,name,value):
         self.__dict__[name] = value
-    #def __getattr__(self, key):
-    #    if key in self.__dict__:
-    #        return self.__dict__[key]
-    #    else: return self.__class__.__dict__[key]
     def __setitem__(self, key, value):
         if "set_"+key in self:
             if isinstance(value, tuple) or isinstance(value, list):
@@ -137,43 +128,22 @@ class UniversalViewer:
             return getattr(self, key)
         except AttributeError:
             try:
-                #print "get_"+key
                 return getattr(self,"get_"+key)()
             except AttributeError:
                 raise KeyError("get_"+key)
-    #def __iter__(self):
-    #    return iter(self.namespace)
-    #def __len__(self):
-    #    return len(self.namespace)
-
-    #        #raise KeyError(key)
     def __contains__(self, key):
         k_in_d = key in self.__dict__ or key in self.__class__.__dict__
         gsk_in_d = "set_"+key in self.__dict__ and "get_"+key in self.__dict__
         gsk_in_cd = "set_"+key in self.__class__.__dict__ and "get_"+key in self.__class__.__dict__
         return k_in_d or gsk_in_d or gsk_in_cd
-    #def __delitem__(self,key):
-    #    del self[key]
-    #def __getitem__(self, key): # getitem would evaluate it immideately, yes recursion is possible
-    #    # is not usable for mouse methods
-    #    arglist = get_arglist(self.params[key])
-    #    return self.params[key](*[self[t] for t in arglist ])
-    #def __setitem__(self, key, value):
-    #    self.params[key] = value
-    #def __iter__(self):
-    #    return iter(self.params)
-    #def __len__(self):
-    #    return len(self.params)
     def execute(self, string, **kwargs):
         "выполняет функции в переменных вьюера, служебная функциия"
-        #kwargs["__builtins__"]=__builtins__
         kwargs.update(globals())
         if isinstance(string, str): exec(string,kwargs,self)
         else: exec(func2string(string), kwargs, self)
         glutPostRedisplay()
     def evaluate(self, mystring, **kwargs):
         "вычисляет выражение в переменных вьюера, служебная функциия"
-        #kwargs["__builtins__"]=__builtins__
         kwargs.update(globals())
         print mystring
         if isinstance(mystring, str): return eval(mystring,kwargs,self)
@@ -201,12 +171,9 @@ class UniversalViewer:
         self.palettes[name] = Texture(pal, nlen/3)
     def eval_template(self, template):
         "Вычисляет значение строки-шаблона"
-        #for key in Formatter().parse(template):
-        #    print key[1]
         return Formatter().vformat(template,[],self)
     def get_image_name(self):
         "Вычисляет значение изображения по умолчанию, используя image_name_template"
-        #for key in Formatter().parse(template):
         return self.eval_template(self.image_name_template)
     def get_title(self):
         "Вычисляет значение заголовка, используя titel_template"
@@ -243,24 +210,20 @@ class UniversalViewer:
         return KeyHandler
     def help(self, myobject=None):
         "Показать справку на обьект"
-#Вот это придется конкретно переделать
-        self.__help = True
-
         @threaded
         def help_thread(self, myobject):
-            self.rl_reader.lock.acquire()
+            self.__help.acquire()
+            os.kill(self._t.pid,signal.SIGSTOP)
+            self.rl_reader.lock.release() # Мы его остановили так что можно освободить
+            self.rl_reader.lock.acquire() # и занять lock на чтенеие
             if myobject is None:
                 help(self)
             else: help(myobject)
-            self.rl_reader.lock.release()
-            self.__help = False
+            # освобождение замка на чтение тут не нужно, т.к. продолжение
+            # _t его должно захватывать
+            os.kill(self._t.pid,signal.SIGCONT)
+            self.__help.release()
         help_thread(self,myobject)
-    #def __async_getline(self):
-    #    "Асинхронно читает строку со стандартного ввода, служебная функция"
-    #    try:
-    #        self.com_thr = self.rl_reader.async_getline()
-    #    except EOFError:
-    #        self.exit()
     def set_pal(self, pal_name):
         "Устанавливает палитру"
         self.tex = self.palettes[pal_name]
@@ -368,7 +331,6 @@ class UniversalViewer:
         else: self.V.mouse_click(3,GLUT_DOWN,0,0)
     def idle(self):
         "Функция idle для окна"
-        #if (not self.__help and not self.com_thr.is_alive()):
         command = self.rl_reader.get()
         while(command):
             try:
@@ -379,12 +341,11 @@ class UniversalViewer:
             except (NameError, SyntaxError, TypeError):
                 import traceback
                 traceback.print_exception( *sys.exc_info())
+                command=""
             except:
                 import traceback
                 traceback.print_exception( *sys.exc_info())
                 self.exit()
-                #if (not self.__help and not self.com_thr.is_alive()): self.__async_getline()
-            #command = self.rl_reader.q.get()
         cur_time = time.time()
         for i, (name, last_time, interval, action) in enumerate(self.idle_actions):
             if cur_time-last_time>=interval:
@@ -483,10 +444,6 @@ class UniversalViewer:
             self.autoscale()
         self.V.display()
         self.Surf.display(self.V, self.spr, self.tex)
-        #com = self.V.get_command()
-        #com = sys.stdin.readline()
-        #if (com):
-        #    print "inpu command %s"%com
         if self.ax:
             self.V.axis_switch()
             GL.glDepthFunc(GL.GL_GREATER) # Overdraw)
@@ -502,14 +459,12 @@ class UniversalViewer:
     def exit(self):
         "Закрывает окно и завершает програму"
         if (self._closed == True): return
-        #sys.exit()
-        #sys.stdin.close()
-        os.kill(os.getpid(),signal.SIGALRM)
         self._closed = True
+        os.kill(self._t.pid,signal.SIGHUP)
         self.rl_reader.lock.acquire()
         self.rl_reader.lock.release()
+        self._t.join()
         glutLeaveMainLoop()
-        #self.com_thr.join()
     def keyhelp(self):
         "Выводит справку по привязкам клавиш"
 #тут не хватает нормального форматирования для комбинаций клавиш
@@ -526,9 +481,7 @@ class UniversalViewer:
         x,y = self.get_width(), self.get_height()
         print x,y
         GL.glReadBuffer(GL.GL_FRONT)
-        #buffer = ( 3*GL.GLubyte * x*y )(0)
         glutPostRedisplay()
-        #self.display`()
         buffer = GL.glReadPixels(0, 0, x, y, GL.GL_RGB, GL.GL_UNSIGNED_BYTE)
         time.sleep(0.5)
         image = Image.frombytes(mode="RGB", size=(x, y), data=buffer)
@@ -540,6 +493,9 @@ class UniversalViewer:
     def set_title(self,template):
         "Изменяет шаблон заголовка, Шаблон является строкой для оператора форматирования"
         self.title_template = template
+    def __sigterm_handler(self,signum,frame):
+        "Сохранять историю при внезапном закрытии терминала, служебная функция"
+        self.exit()
     def __call__(self): # start main loop
         "Запускает mainloop"
         glutSetWindowTitle(self.get_title())#self.exec(self.title_template.format(self.params)))
@@ -553,9 +509,7 @@ class UniversalViewer:
         glutReshapeFunc(self.V.reshape)
         glutIdleFunc(self.idle)
         glutCloseFunc(self.exit)
-        t = threading.Thread(target=glutMainLoop)
-        t.start()
-        self.rl_reader()
-        t.join()
-
+        self._t=self.rl_reader()
+        signal.signal(signal.SIGHUP,self.__sigterm_handler)
+        glutMainLoop()
 
