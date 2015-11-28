@@ -50,7 +50,7 @@ class rl_async_reader:
         readline.write_history_file(self.history_path)
     def kill_handler(self,signum, frame):
         signal.signal(signal.SIGHUP, signal.SIG_IGN)
-        raise self.KillException()
+        raise self.KillException
     def pre_input_hook(self):
         signal.signal(signal.SIGHUP, self.kill_handler)
     def get(self):
