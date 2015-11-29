@@ -73,7 +73,7 @@ void Viewer::drag(int x, int y){
         float px = ((float)x)/min_size*2;
         float py = ((float)y)/min_size*2;
         tr.x = px -tr0.x;
-        tr.y = py -tr0.y;
+        tr.y = -(py -tr0.y);//z is inverted
         //calc_mvp();
     }
     if (right_click){
