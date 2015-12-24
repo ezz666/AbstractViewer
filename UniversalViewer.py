@@ -336,16 +336,17 @@ class UniversalViewer:
             try:
                 if isinstance (command, str):
                     self.execute(command)
-                    command = self.rl_reader.get()
                 else: raise command
             except (NameError, SyntaxError, TypeError):
-                import traceback
+                import traceback, sys
                 traceback.print_exception( *sys.exc_info())
-                command=""
+                command = self.rl_reader.get()
             except:
-                import traceback
+                command = ""
+                import traceback, sys
                 traceback.print_exception( *sys.exc_info())
                 self.exit()
+            else: command = self.rl_reader.get()
         cur_time = time.time()
         for i, (name, last_time, interval, action) in enumerate(self.idle_actions):
             if cur_time-last_time>=interval:
