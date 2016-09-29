@@ -5,7 +5,7 @@
 class Viewer;
 class Plottable;
 //--------------------------------------------------------------------------------
-//TEXRTURES
+// TEXRTURES
 //--------------------------------------------------------------------------------
 class Texture{
     private:
@@ -23,7 +23,26 @@ class Texture{
         void nearest();
 };
 //--------------------------------------------------------------------------------
-//SAHDERS
+// FRAMEBUFFERS
+//--------------------------------------------------------------------------------
+class FrameBuffer{
+	private:
+		GLuint frame_buffer, render_buffer,depth_buffer;
+		GLenum type;
+		int _width, _height;
+	public:
+		FrameBuffer(int w, int h, int _type= (int)GL_RGBA);
+		~FrameBuffer();
+		void resize(int w, int h);
+		int width(){return _width;};
+		int height(){return _height;};
+		void bind_draw();
+		void bind_read();
+		//int pixels_num(){return _width*_height;};
+		void relax();
+};
+//--------------------------------------------------------------------------------
+// SHADERS
 //--------------------------------------------------------------------------------
 class ShaderProg{
     private:

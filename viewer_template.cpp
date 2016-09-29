@@ -89,7 +89,7 @@ void Viewer::drag(int x, int y){
 }
 void Viewer::GL_init(){
     checkOpenGLerror();
-    printf("init begin\n");
+    //printf("init begin\n");
     glewExperimental=GL_TRUE;
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
@@ -105,7 +105,7 @@ void Viewer::GL_init(){
     //glBlendFunc(GL_ONE, GL_ONE);
     glewInit();
     checkOpenGLerror();
-    printf("init end\n");
+    //printf("init end\n");
 }
 //--------------------------------------------------------------------------------
 //i==0,1,2 — min x,y,z

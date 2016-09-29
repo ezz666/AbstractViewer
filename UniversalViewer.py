@@ -78,19 +78,17 @@ class UniversalViewer:
         glutCreateWindow("viewer")
         self.V.GL_init()
         self.spr = ShaderProg()
-        print "before pal"
         checkOpenGLerror()
         self.palettes = {}
         self.add_pal("pal", [1.,0.,0., 1.,.5,0., 1.,1.,0., 0.,1.,0., 0.,1.,1., 0.,0.,1., 1.,0.,1.])
         self.add_pal("rgb", [1.,0.,0.,0.,1.,0.,0.,0.,1.])
-        print "After pal"
         checkOpenGLerror()
         self.Axis = Axis()
-        print "After axis"
         checkOpenGLerror()
         self.rl_reader = rl_async_reader(sys.stdin.fileno(), os.path.expanduser("~/.UniversalViewer"))
         self.Axis.load_on_device()
-        print "After axis load"
+        checkOpenGLerror()
+        self.savebuffer = FrameBuffer(self.V.get_width(), self.V.get_height());
         checkOpenGLerror()
         d ={}
         self._closed = False
@@ -476,20 +474,39 @@ class UniversalViewer:
     def shader_load(self, vertex_string, fragment_string):
         "Загружает шейдеры из строк"
         self.spr.extern_load(vertex_string, fragment_string)
-    def saveimage(self,name):
+    def saveimage(self,name,width=None, height=None):
         "Сохраняет отображаемое изображение под именем name"
+        if width is None:
+            width = self.get_width()
+        if height is None:  height= self.get_height()
         #from OpenGL import GL
-        x,y = self.get_width(), self.get_height()
-        print x,y
-        GL.glReadBuffer(GL.GL_FRONT)
-        glutPostRedisplay()
-        buffer = GL.glReadPixels(0, 0, x, y, GL.GL_RGB, GL.GL_UNSIGNED_BYTE)
-        time.sleep(0.5)
-        image = Image.frombytes(mode="RGB", size=(x, y), data=buffer)
+        #myfb = GL.glGenFramebuffers(1)
+        if width != self.savebuffer.width() or height != self.savebuffer.height():
+            self.savebuffer.resize(width,height)
+        old_w,old_h = self.get_width(), self.get_height()
+        if old_w!= width or old_h != height:
+            self.V.reshape(width, height)
+        checkOpenGLerror()
+        self.savebuffer.bind_draw()
+        #GL.glReadBuffer(GL.GL_BACK)
+        #GL.glRenderBuffer(Gl.GL_BACK)
+        #GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, myfb)
+        checkOpenGLerror()
+        self.display()
+        checkOpenGLerror()
+        self.savebuffer.bind_read()
+        checkOpenGLerror()
+        buffer = GL.glReadPixels(0, 0, x, y, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE)
+        checkOpenGLerror()
+        #time.sleep(0.5)
+        image = Image.frombytes(mode="RGBA", size=(x, y), data=buffer)
         image = image.transpose(Image.FLIP_TOP_BOTTOM)
         print "saved to "+name
         image.save(name)
         image.close()
+        self.savebuffer.relax()
+        #GL.glDeleteFramebuffers(myfb)
+        self.V.reshape(old_w,old_h)
         del buffer, image
     def set_title(self,template):
         "Изменяет шаблон заголовка, Шаблон является строкой для оператора форматирования"

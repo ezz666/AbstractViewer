@@ -1,5 +1,5 @@
 #version 330 core
-in vec3 coord, normal;
+in vec3 coord;//, normal;
 in float color;
 uniform mat4 MVP, itMVP;
 uniform vec3 vmax, vmin, minmaxmul;
@@ -13,9 +13,9 @@ void main() {
         gl_ClipDistance[i+3]=vmax[i] -coord[i];
     }
     vec4 res = MVP*vec4(coord,1.0);
-    int r = (gl_VertexID & (255));
-    int g = (gl_VertexID >> 8 ) & (255);
-    int b = (gl_VertexID >> 16) & (65535);
+    int r = (gl_VertexID & 255)-128;
+    int g = ((gl_VertexID >> 8 ) & 255)-128;
+    int b = ((gl_VertexID >> 16) & 65535)-128;
     vec3 center = (vmin+vmax)*0.5;
     res.z = 2*((MVP*vec4(center,1.)).z - res.z)*scale/(distance(vmax,vmin)); // in [-1, 1]
     c = (color-minmaxmul.x)/(minmaxmul.y - minmaxmul.x);

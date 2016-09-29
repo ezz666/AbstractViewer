@@ -6,7 +6,7 @@
 
 void ShaderProg::init(){
     sprog = ProgLink(vshader,fshader);
-    printf("link end\n");
+    //printf("link end\n");
     //AttachAttr(vattr, "coord", sprog);
     //AttachAttr(nattr, "normal", sprog);
     //AttachAttr(cattr, "color", sprog);
@@ -17,16 +17,16 @@ void ShaderProg::init(){
     //AttachUniform(vmin, "vmin",sprog);
     //AttachUniform(vmax, "vmax",sprog);
     checkOpenGLerror();
-    printf("shaders end\n");
+    //printf("shaders end\n");
 }
 //--------------------------------------------------------------------------------
 ShaderProg::ShaderProg(const char * vss, const char* fss){
     checkOpenGLerror();
-    printf("shaders begin\n");
+    //printf("shaders begin\n");
     vshader = ShaderComp(GL_VERTEX_SHADER, vss);
-    printf("shaders v\n");
+    //printf("shaders v\n");
     fshader = ShaderComp(GL_FRAGMENT_SHADER, fss);
-    printf("shaders f\n");
+    //printf("shaders f\n");
     this->init();
 }
 //--------------------------------------------------------------------------------
@@ -36,10 +36,10 @@ ShaderProg::~ShaderProg(){
 //--------------------------------------------------------------------------------
 void ShaderProg::extern_load(const char * vsf, const char* fsf){
     checkOpenGLerror();
-    printf("shaders begin\n");
+    //printf("shaders begin\n");
     vshader = ShaderLoad(GL_VERTEX_SHADER, vsf);
     fshader = ShaderLoad(GL_FRAGMENT_SHADER, fsf);
-    printf("shaders init\n");
+    //printf("shaders init\n");
     this->init();
 }
 //--------------------------------------------------------------------------------
@@ -56,14 +56,14 @@ GLuint ShaderProg::ShaderLoad(GLenum shader_type, const char * shader_file){
 }
 //--------------------------------------------------------------------------------
 GLuint ShaderProg::ShaderComp(GLenum shader_type, const char * Source){
-    printf("shaders Comp\n");
+    //printf("shaders Comp\n");
     GLuint shade = glCreateShader(shader_type);
-    printf("shaders cre\n");
+    //printf("shaders cre\n");
     glShaderSource(shade, 1, & Source, NULL);
-    printf("shaders comp\n");
+    //printf("shaders comp\n");
     glCompileShader(shade);
-    if (shader_type == GL_VERTEX_SHADER) std::cout << "vertex shader \n";
-    else std::cout << "fragment shader \n";
+    //if (shader_type == GL_VERTEX_SHADER) std::cout << "vertex shader \n";
+    //else std::cout << "fragment shader \n";
     return shade;
 }
 //--------------------------------------------------------------------------------
@@ -177,14 +177,14 @@ Texture::Texture(const float* pal, int length){
     glGenSamplers(1, &samplerID);
     //glBindSampler(GL_TEXTURE0, samplerID);
     linear();
-    printf("gen tex sampl\n");
+    //printf("gen tex sampl\n");
     checkOpenGLerror();
     glBindTexture(GL_TEXTURE_1D, textureID);
-    printf("bind tex sampl\n");
+    //printf("bind tex sampl\n");
     checkOpenGLerror();
-    printf("pre load tex\n");
+    //printf("pre load tex\n");
     glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, tex_len, 0, GL_RGB, GL_FLOAT, pal);
-    printf("load tex\n");
+    //printf("load tex\n");
     checkOpenGLerror();
     glBindTexture(GL_TEXTURE_1D, 0);
 }
@@ -231,5 +231,63 @@ void Texture::use_texture(/*GLint tli*/){
     //printf("sampler activated\n");
     //checkOpenGLerror();
     //printf("texture use set\n");
+}
+//--------------------------------------------------------------------------------
+// FRAMEBUFFERS
+//--------------------------------------------------------------------------------
+FrameBuffer::FrameBuffer(int w, int h, int _type){
+	_width = w; _height = h;
+	type= (GLenum)_type;
+	glGenFramebuffers(1,&frame_buffer);
+	glBindFramebuffer(GL_FRAMEBUFFER,frame_buffer);
+	glGenRenderbuffers(1,&render_buffer);
+	glBindRenderbuffer(GL_RENDERBUFFER, render_buffer);
+	glRenderbufferStorage(GL_RENDERBUFFER, type, _width, _height);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, render_buffer);
+	//glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	glGenRenderbuffers(1,&depth_buffer);
+	glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, _width, _height);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);
+	GLint status = glCheckFramebufferStatus(GL_FRAMEBUFFER) ;
+	//std::cout<<"fb init"<<std::endl;
+	checkOpenGLerror();
+	if(status != GL_FRAMEBUFFER_COMPLETE) {
+		std::cout<<"failed to make complete framebuffer object "<< status<<std::endl;
+	}
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER,0);
+}
+//--------------------------------------------------------------------------------
+FrameBuffer::~FrameBuffer(){
+	glDeleteFramebuffers(1,&frame_buffer);
+	glDeleteRenderbuffers(1,&render_buffer);
+	glDeleteRenderbuffers(1,&depth_buffer);
+}
+//--------------------------------------------------------------------------------
+void FrameBuffer::resize(int w, int h){
+	_width = w; _height = h;
+	glBindFramebuffer(GL_FRAMEBUFFER,frame_buffer);
+	glBindRenderbuffer(GL_RENDERBUFFER,render_buffer);
+	glRenderbufferStorage(GL_RENDERBUFFER, type, _width, _height);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, render_buffer);
+	glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, _width, _height);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
+}
+//--------------------------------------------------------------------------------
+void FrameBuffer::bind_draw(){
+	glBindFramebuffer(GL_FRAMEBUFFER,frame_buffer);
+	glBindRenderbuffer(GL_RENDERBUFFER,render_buffer);
+}
+//--------------------------------------------------------------------------------
+void FrameBuffer::bind_read(){
+	glReadBuffer(GL_COLOR_ATTACHMENT0);
+}
+//--------------------------------------------------------------------------------
+void FrameBuffer::relax(){
+	glBindFramebuffer(GL_FRAMEBUFFER,0);
 }
 //--------------------------------------------------------------------------------
