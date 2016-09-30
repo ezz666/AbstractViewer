@@ -496,10 +496,10 @@ class UniversalViewer:
         checkOpenGLerror()
         self.savebuffer.bind_read()
         checkOpenGLerror()
-        buffer = GL.glReadPixels(0, 0, x, y, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE)
+        buffer = GL.glReadPixels(0, 0, width, height, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE)
         checkOpenGLerror()
         #time.sleep(0.5)
-        image = Image.frombytes(mode="RGBA", size=(x, y), data=buffer)
+        image = Image.frombytes(mode="RGBA", size=(width, height), data=buffer)
         image = image.transpose(Image.FLIP_TOP_BOTTOM)
         print "saved to "+name
         image.save(name)
