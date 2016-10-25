@@ -42,6 +42,10 @@ void VertexArray::load_data(int pos, int size, const void * data){
     checkOpenGLerror();
 }
 //--------------------------------------------------------------------------------
+GLuint & VertexArray::get_BO(int pos){
+	return BOs[pos];
+}
+//--------------------------------------------------------------------------------
 void VertexArray::load_indices(int size, const void * data){
 	this->bind();
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, data, GL_STATIC_DRAW );

@@ -26,6 +26,7 @@ class VertexArray{
 		void add_buffer();
 		void load_data(int pos, int size, const void * data);
 		void load_indices(int size, const void * data);
+		GLuint & get_BO(int pos);
 		void bind();
 		GLint & get_attr(int pos);
 		void enable_attr(int pos, int num, GLenum type);
