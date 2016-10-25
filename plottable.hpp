@@ -12,14 +12,34 @@
 #include <iostream>
 #include "shaderprog.hpp"
 class ShaderProg;
+//--------------------------------------------------------------------------------
+// Vertex array object (VAO)
+//--------------------------------------------------------------------------------
+class VertexArray{
+	private:
+		GLuint AO, EBO; // vertex array object, Element Buffer obkect
+		std::vector<GLuint> BOs; // Buffer objects
+		std::vector<GLint> attrs; // attributes position
+	public:
+		VertexArray();
+		~VertexArray();
+		void add_buffer();
+		void load_data(int pos, int size, const void * data);
+		void load_indices(int size, const void * data);
+		void bind();
+		GLint & get_attr(int pos);
+		void enable_attr(int pos, int num, GLenum type);
+		void release();
+};
 //------------------------------------------------------------------------------
 class Plottable{
     protected:
-        GLuint VAO;
-        GLuint VBO[4];
-        GLint vattr, nattr, cattr;
-        Plottable();
-        virtual ~Plottable();
+        //GLuint VAO;
+        //GLuint VBO[4];
+        VertexArray VAO;
+        //GLint vattr, nattr, cattr;
+        Plottable():VAO(){};
+        virtual ~Plottable(){};
     public:
         virtual void plot(ShaderProg * spr)=0;
         //virtual void plot_index(GLint vattr, GLint nattr, GLint cattr, GLint unif_minmax) const=0;
