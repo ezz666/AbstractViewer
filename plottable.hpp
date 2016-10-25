@@ -1,10 +1,10 @@
 #ifndef PLOTTABLE
 #define PLOTTABLE
 
-#define IND 0
-#define POS 1
-#define NRM 2
-#define CLR 3
+#define IND 3
+#define POS 0
+#define NRM 1
+#define CLR 2
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtx/normal.hpp>
@@ -49,7 +49,11 @@ class Axis: public Plottable{
     GLint unif_minmax;
     ~Axis(){};
     public:
-    Axis():Plottable(){};
+    Axis():Plottable(){
+	    VAO.add_buffer();
+	    VAO.add_buffer();
+	    VAO.add_buffer();
+    };
     void load_on_device();
     //Закрепим значения атрибутов и т.п.
     void AttachToShader(ShaderProg * spr) ;

@@ -8,6 +8,7 @@ VertexArray::VertexArray(){
 	this->bind();
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     this->release();
+    checkOpenGLerror();
 }
 //--------------------------------------------------------------------------------
 VertexArray::~VertexArray(){
@@ -22,6 +23,7 @@ void VertexArray::add_buffer(){
 	this->bind();
 	glGenBuffers(1, &BOs.back());
 	this->release();
+    checkOpenGLerror();
 }
 //--------------------------------------------------------------------------------
 void VertexArray::bind(){
@@ -37,12 +39,14 @@ void VertexArray::load_data(int pos, int size, const void * data){
 	glBindBuffer(GL_ARRAY_BUFFER, BOs[pos]);
 	glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
 	this->release();
+    checkOpenGLerror();
 }
 //--------------------------------------------------------------------------------
 void VertexArray::load_indices(int size, const void * data){
 	this->bind();
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, data, GL_STATIC_DRAW );
 	this->release();
+    checkOpenGLerror();
 }
 //--------------------------------------------------------------------------------
 GLint & VertexArray::get_attr(int pos){
@@ -55,6 +59,7 @@ void VertexArray::enable_attr(int pos, int num, GLenum type){
 		glBindBuffer(GL_ARRAY_BUFFER, BOs[pos]);
 		glVertexAttribPointer(attrs[pos], num, type, GL_FALSE, 0, 0);
 	}
+    checkOpenGLerror();
 }
 //------------------------------------------------------------------------------
 // Plottable
@@ -87,13 +92,10 @@ void Axis::load_on_device(){
         glm::vec3(1,1,1), glm::vec3(1,1,1), glm::vec3(1,1,1) };
     float ap[6] = {0.f,0.f,1.f,1.f,2.f,2.f};
     unsigned int indices[6] = {0,1, 2,3, 4,5};//Мы не можем сделать по-другому : цвет различается значит все индексы разные
-    VAO.add_buffer();
     VAO.load_data(POS, sizeof(glm::vec3) * NTR*2, tri);
     //glBindBuffer(GL_ARRAY_BUFFER, VBO[POS]);
     //glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * NTR*2, tri, GL_STATIC_DRAW);
-    VAO.add_buffer();
     VAO.load_data(NRM, sizeof(glm::vec3) * NTR*2, norm);
-    VAO.add_buffer();
     VAO.load_data(CLR, sizeof(float) * NTR*2, ap);
     //glBindBuffer(GL_ARRAY_BUFFER, VBO[NRM]);
     //glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * NTR*2, norm, GL_STATIC_DRAW);
