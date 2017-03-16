@@ -6,7 +6,7 @@ from OpenGL.GLUT import *
 import os.path
 from PIL import Image
 from OpenGL import GL
-from aivlib.vctf3 import *
+#from aivlib.vctf3 import *
 #from collections import MutableMapping
 import time
 import signal
