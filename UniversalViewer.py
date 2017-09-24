@@ -85,7 +85,7 @@ class UniversalViewer:
         checkOpenGLerror()
         self.Axis = Axis()
         checkOpenGLerror()
-        self.rl_reader = rl_async_reader(sys.stdin.fileno(), os.path.expanduser("~/.UniversalViewer"))
+        self.rl_reader = rl_async_reader(sys.stdin.fileno(), os.path.expanduser("~/.{}_history".format(os.path.basename(argv[0]))))
         self.Axis.load_on_device()
         checkOpenGLerror()
         self.savebuffer = FrameBuffer(self.V.get_width(), self.V.get_height());
