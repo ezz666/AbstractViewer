@@ -475,8 +475,8 @@ class UniversalViewer:
         "Загружает шейдеры из файлов"
         self.spr.extern_load(vertex_string, fragment_string)
     def shader_load(self, vertex_string, fragment_string):
-        "Загружает шейдеры из файлов"
-        self.spr=ShaderProg(vertex_string, fragment_string)
+        "Загружает шейдеры из строк"
+        self.spr.load(vertex_string, fragment_string)
     def saveimage(self,name,width=None, height=None):
         "Сохраняет отображаемое изображение под именем name"
         if width is None:

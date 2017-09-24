@@ -49,7 +49,8 @@ class ShaderProg{
         GLuint vshader, fshader, sprog;
         //GLint vattr, nattr, cattr, mvp_loc, it_mvp_loc,
         //      unif_minmax, /*tex_length,*/ vmin, vmax;
-        static GLuint ShaderLoad(GLenum shader_type, const char * shader_file);
+        static GLuint ShaderExternLoad(GLenum shader_type, const char * shader_file);
+        static GLuint ShaderLoad(GLenum shader_type, const char * shader_source);
         static GLuint ShaderComp(GLenum shader_type, const char * shader_source);
         static GLuint ProgLink(GLuint vShader, GLuint fShader);
         static void _AttachUniform(GLint & Unif, const char * name, GLuint Program);
@@ -62,6 +63,7 @@ class ShaderProg{
         ShaderProg(){};
         ShaderProg(const char * vertex_shader_source, const char * fragment_shader_source);
         void extern_load(const char * vertex_shader_file, const char * fragment_shader_file);
+        void load(const char * vertex_shader_file, const char * fragment_shader_file);
         /*template<int sur_size>*/ void render(/*Surface<sur_size>*/Plottable * surf, Viewer * view, Texture* tex);
         ///*template<int sur_size>*/ void render(/*Surface<sur_size>*/Plottable * surf, Viewer * view);
         //void load_mvp(const glm::mat4 & MVP, const glm::mat4 & itMVP);

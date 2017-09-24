@@ -37,13 +37,22 @@ ShaderProg::~ShaderProg(){
 void ShaderProg::extern_load(const char * vsf, const char* fsf){
     checkOpenGLerror();
     //printf("shaders begin\n");
+    vshader = ShaderExternLoad(GL_VERTEX_SHADER, vsf);
+    fshader = ShaderExternLoad(GL_FRAGMENT_SHADER, fsf);
+    //printf("shaders init\n");
+    this->init();
+}
+//--------------------------------------------------------------------------------
+void ShaderProg::load(const char * vsf, const char* fsf){
+    checkOpenGLerror();
+    //printf("shaders begin\n");
     vshader = ShaderLoad(GL_VERTEX_SHADER, vsf);
     fshader = ShaderLoad(GL_FRAGMENT_SHADER, fsf);
     //printf("shaders init\n");
     this->init();
 }
 //--------------------------------------------------------------------------------
-GLuint ShaderProg::ShaderLoad(GLenum shader_type, const char * shader_file){
+GLuint ShaderProg::ShaderExternLoad(GLenum shader_type, const char * shader_file){
     std::ifstream in(shader_file);
     std::string contents( (std::istreambuf_iterator<char>(in)),
             std::istreambuf_iterator<char>() );
@@ -52,6 +61,11 @@ GLuint ShaderProg::ShaderLoad(GLenum shader_type, const char * shader_file){
     std::strcpy( Source, contents.c_str() );
     GLuint shade = ShaderComp(shader_type, Source);
     delete [] Source;
+    return shade;
+}
+//--------------------------------------------------------------------------------
+GLuint ShaderProg::ShaderLoad(GLenum shader_type, const char * shader_source){
+    GLuint shade = ShaderComp(shader_type, shader_source);
     return shade;
 }
 //--------------------------------------------------------------------------------
