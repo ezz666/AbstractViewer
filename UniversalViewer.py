@@ -446,9 +446,19 @@ class UniversalViewer:
         if self.ax:
             self.V.axis_switch()
             GL.glDepthFunc(GL.GL_GREATER) # Overdraw)
-            self.spr.render(self.Axis, self.V, self.palettes["rgb"])
+            #self.spr.render(self.Axis, self.V, self.palettes["rgb"]) # replace it with single functions
+            self.spr.start()
+            self.palettes["rgb"].use_texture(self.spr,"pal")
+            self.V.plot(self.spr)
+            self.Axis.plot(self.spr)
+            self.spr.stop()
             GL.glDepthFunc(GL.GL_LEQUAL)
-            self.spr.render(self.Axis, self.V, self.palettes["rgb"])
+            #self.spr.render(self.Axis, self.V, self.palettes["rgb"])
+            self.spr.start()
+            self.palettes["rgb"].use_texture(self.spr,"pal")
+            self.V.plot(self.spr)
+            self.Axis.plot(self.spr)
+            self.spr.stop()
             self.V.axis_switch()
     def display(self):
         "Функция display для окна, служебная функция"

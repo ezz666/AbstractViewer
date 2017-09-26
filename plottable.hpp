@@ -16,21 +16,21 @@ class ShaderProg;
 // Vertex array object (VAO)
 //--------------------------------------------------------------------------------
 class VertexArray{
-	private:
-		GLuint AO, EBO; // vertex array object, Element Buffer obkect
-		std::vector<GLuint> BOs; // Buffer objects
-		std::vector<GLint> attrs; // attributes position
-	public:
-		VertexArray();
-		~VertexArray();
-		void add_buffer();
-		void load_data(int pos, int size, const void * data);
-		void load_indices(int size, const void * data);
-		GLuint & get_BO(int pos);
-		void bind();
-		GLint & get_attr(int pos);
-		void enable_attr(int pos, int num, GLenum type);
-		void release();
+    private:
+        GLuint AO, EBO; // vertex array object, Element Buffer obkect
+        std::vector<GLuint> BOs; // Buffer objects
+        std::vector<GLint> attrs; // attributes position
+    public:
+        VertexArray();
+        ~VertexArray();
+        void add_buffer();
+        void load_data(int pos, int size, const void * data);
+        void load_indices(int size, const void * data);
+        GLuint & get_BO(int pos);
+        void bind();
+        GLint & get_attr(int pos);
+        void enable_attr(int pos, int num, GLenum type);
+        void release();
 };
 //------------------------------------------------------------------------------
 class Plottable{
@@ -51,9 +51,9 @@ class Axis: public Plottable{
     ~Axis(){};
     public:
     Axis():Plottable(){
-	    VAO.add_buffer();
-	    VAO.add_buffer();
-	    VAO.add_buffer();
+        VAO.add_buffer();
+        VAO.add_buffer();
+        VAO.add_buffer();
     };
     void load_on_device();
     //Закрепим значения атрибутов и т.п.
