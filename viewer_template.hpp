@@ -59,9 +59,9 @@ class Viewer{
         //GLint vattr, nattr, cattr, mvp_loc,
         //      unif_minmax;
         glm::quat orient;
-        glm::mat4 MVP,ort;
+        glm::mat4 MVP,Model,ort;
         std::future<std::string> command_fut;
-        GLint mvp_loc, it_mvp_loc, vmin, vmax, vport, unif_scale;
+        GLint mvp_loc, model_loc, it_mvp_loc, vmin, vmax, vport, unif_scale;
         glm::vec3 background;
         void _reshape(int w, int h);
         //std::string com;

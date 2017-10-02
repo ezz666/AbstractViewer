@@ -152,6 +152,7 @@ const glm::mat4 Viewer::calc_mvp(){
     auto rot_tmp = get_rot_tmp();
     if (! axis_sw){
         MVP = glm::translate(ort, glm::vec3(tr*scale,0.f))* glm::translate(glm::toMat4( rot_tmp * orient), -pos);
+        Model  = glm::inverseTranspose(glm::translate(glm::mat4(1.0), glm::vec3(tr*scale,0.f))* glm::translate(glm::toMat4( rot_tmp * orient), -pos));
     } else {
         float m = (float)std::min(width, height);
         MVP = glm::ortho(-1.f*width/m, 1.f*width/m, -1.f*height/m, 1.f*height/m,
@@ -206,6 +207,7 @@ void Viewer::display(){
 void Viewer::plot(ShaderProg * spr){
     spr->AttachUniform(mvp_loc, "MVP");
     spr->AttachUniform(it_mvp_loc, "itMVP");
+    spr->AttachUniform(model_loc, "Model");
     spr->AttachUniform(vmin, "vmin");
     spr->AttachUniform(vmax, "vmax");
     spr->AttachUniform(vport, "viewport");
@@ -213,6 +215,9 @@ void Viewer::plot(ShaderProg * spr){
     if (mvp_loc != -1){
         const glm::mat4 & _MVP = calc_mvp();
         glUniformMatrix4fv( mvp_loc, 1, GL_FALSE, glm::value_ptr(_MVP));
+    }
+    if (model_loc != -1){
+        glUniformMatrix4fv( model_loc, 1, GL_FALSE, glm::value_ptr(Model));
     }
     if (it_mvp_loc != -1){
         const glm::mat4 & itMVP = calc_itmvp();

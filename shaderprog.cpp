@@ -267,7 +267,7 @@ void Texture3D::load(const float* pal,  int _xsz, int _ysz, int _zsz){
    zsz = _zsz;
    tex_len=xsz*ysz*zsz;
    glActiveTexture(TexTarget);
-   glBindTexture(GL_TEXTURE_1D, textureID);
+   glBindTexture(GL_TEXTURE_3D, textureID);
    glBindSampler(TexTarget-GL_TEXTURE0, samplerID);
    if (tex_len>0){
       glBindTexture(GL_TEXTURE_3D, textureID);
@@ -313,7 +313,7 @@ void Texture3D::use_texture(ShaderProg * spr, const char* name, GLenum texture){
       glUniform1i(tex_loc, texture-GL_TEXTURE0);
    }
    glActiveTexture(texture);
-   glBindTexture(GL_TEXTURE_1D, textureID);
+   glBindTexture(GL_TEXTURE_3D, textureID);
    glBindSampler(texture-GL_TEXTURE0, samplerID);
    checkOpenGLerror();
    //checkOpenGLerror();
