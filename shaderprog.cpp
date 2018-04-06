@@ -198,12 +198,25 @@ Texture::Texture(const float* pal, int length, GLenum _TexTarget):TexTarget(_Tex
    glGenSamplers(1, &samplerID);
    //glBindSampler(GL_TEXTURE0, samplerID);
    linear();
-   glBindTexture(GL_TEXTURE_1D, textureID);
    checkOpenGLerror();
-   glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, tex_len, 0, GL_RGB, GL_FLOAT, pal);
-   glBindTexture(GL_TEXTURE_1D, 0);
-   checkOpenGLerror();
+   load(pal, length);
 }
+void Texture::load(const float* pal,  int length){
+   tex_len=length;
+   checkOpenGLerror();
+   glActiveTexture(TexTarget);
+   glBindTexture(GL_TEXTURE_1D, textureID);
+   glBindSampler(TexTarget-GL_TEXTURE0, samplerID);
+   if (tex_len>0){
+      glBindTexture(GL_TEXTURE_1D, textureID);
+      checkOpenGLerror();
+      glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, tex_len, 0, GL_RGB, GL_FLOAT, pal);
+      glBindTexture(GL_TEXTURE_1D, 0);
+      checkOpenGLerror();
+   }
+   glBindTexture(GL_TEXTURE_1D, 0);
+}
+//--------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------
 Texture::~Texture(){
    glDeleteTextures(1,&textureID);

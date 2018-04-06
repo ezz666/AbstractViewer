@@ -19,6 +19,7 @@ class Texture{
         Texture():tex_loc(-1),TexTarget(GL_TEXTURE0){};
         Texture(GLenum _TexTarget):TexTarget(_TexTarget){};
         Texture(const float * pal, int length, GLenum _TexTarget=GL_TEXTURE0);
+        void load(const float* pal, int length);
         ~Texture();
         int get_length();
 
