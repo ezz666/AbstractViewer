@@ -21,7 +21,7 @@ _viewer.so: $(shell echo {$(modules)}.o) viewer_wrap.o
 mkextras:=$(firstword $(MAKEFILE_LIST)).extras
 $(shell echo '# This file is generated automatically, do not edit it!' > $(mkextras))
 $(shell echo '# The file contains additional dependencies and rules for building your project.' >> $(mkextras))
-$(shell for m in *.cpp; do $(CXX) $(CXXOPT) -M $$m >> $(mkextras); done)
+$(shell for m in *.cpp; do $(CXX) $(CXX_OPT) -M $$m >> $(mkextras); done)
 include $(mkextras)
 
 clean:
