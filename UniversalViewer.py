@@ -143,7 +143,7 @@ class UniversalViewer:
     def evaluate(self, mystring, **kwargs):
         "вычисляет выражение в переменных вьюера, служебная функциия"
         kwargs.update(globals())
-        print mystring
+        print(mystring)
         if isinstance(mystring, str): return eval(mystring,kwargs,self)
         else: return eval(func2string(mystring), kwargs, self)
     def set_key(self, func, key, modificators = [], key_pressed = [], up = False):
@@ -151,7 +151,7 @@ class UniversalViewer:
         modificators — список нажатых специальных клавиш "Ctrl", "Shift", "Alt" по дефолту пустой,
         key_pressed — спислк клавиш, которые должны быть зажаты, key не считается, up — булево число, True если действие выполняется
         на отпускание, False — усли на нажатии, по умолчанию False'''
-        if(( key not in list(KeysList))  and (key not in SpecialKeysList)): print "Unhandled key {}".format(key); return
+        if(( key not in list(KeysList))  and (key not in SpecialKeysList)): print("Unhandled key {}".format(key)); return
         KeysDict = (self.KeyDown, self.KeyUp, self.SpecialKeyDown, self.SpecialKeyUp)[ int(key in SpecialKeysList) *2 + int(up)]
         KeysDict[key].append((func, modificators, key_pressed))
 #-------------------------------------------------------------
@@ -401,13 +401,13 @@ class UniversalViewer:
         '''Переключает текущее отображение на созраненное с именем name, если save — True созраняет текущие параметры отображения
         под текущим именем, SaveDict — словарь созраняемых параметров'''
         if (self.buffer is not None) and save:
-            print "Save", self.buffer
+            print("Save", self.buffer)
             self.buffers[self.buffer] = (self.dump_params(**self.buffers[self.buffer][1]), self.buffers[self.buffer][1])
         self.buffer  = name
         if name in self.buffers:
-            print "Load", self.buffer
+            print("Load", self.buffer)
             self.load_params(**self.buffers[name][0])
-        print "Save", self.buffer
+        print("Save", self.buffer)
         self.buffers[name] = ( self.dump_params(**SaveDict), SaveDict )
         glutPostRedisplay()
     def next_buffer(self, save=True):
@@ -480,7 +480,7 @@ class UniversalViewer:
         for kd in [self.KeyDown, self.SpecialKeyDown, self.KeyUp, self.SpecialKeyUp]:
             for key, flist in kd.items():
                 for func, modifiers, key_pressed in flist:
-                    print key, '	',func, modifiers, key_pressed
+                    print(key, '	',func, modifiers, key_pressed)
     def shader_extern_load(self, vertex_string, fragment_string):
         "Загружает шейдеры из файлов"
         self.spr.extern_load(vertex_string, fragment_string)
@@ -514,7 +514,7 @@ class UniversalViewer:
         #time.sleep(0.5)
         image = Image.frombytes(mode="RGBA", size=(width, height), data=buffer)
         image = image.transpose(Image.FLIP_TOP_BOTTOM)
-        print "saved to "+name
+        print("saved to "+name)
         image.save(name)
         image.close()
         self.savebuffer.relax()

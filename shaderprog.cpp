@@ -264,17 +264,19 @@ void Texture::use_texture(ShaderProg * spr, const char * name, GLenum texture){
    //printf("texture use set\n");
 }
 //--------------------------------------------------------------------------------
-Texture3D::Texture3D(const float* pal, int _xsz, int _ysz, int _zsz, GLenum _TexTarget):Texture(_TexTarget){
+Texture3D::Texture3D(const float* pal, int _xsz, int _ysz, int _zsz,
+      GLenum _TexTarget, int internal_format, GLenum format, bool interp_linear):Texture(_TexTarget){
    //Texture3D::Texture3D(pal, xsz*ysz*zsz, _TexTarget);
    glGenTextures(1, &textureID);
    glGenSamplers(1, &samplerID);
    //glBindSampler(GL_TEXTURE0, samplerID);
-   linear();
+   if (interp_linear) linear();
+   else nearest();
    //printf("gen tex sampl\n");
    checkOpenGLerror();
-   load(pal, _xsz, _ysz, _zsz);
+   load(pal, _xsz, _ysz, _zsz, internal_format, format);
 }
-void Texture3D::load(const float* pal,  int _xsz, int _ysz, int _zsz){
+void Texture3D::load(const float* pal,  int _xsz, int _ysz, int _zsz, int internal_format, GLenum format){
    xsz = _xsz;
    ysz = _ysz;
    zsz = _zsz;
@@ -287,7 +289,7 @@ void Texture3D::load(const float* pal,  int _xsz, int _ysz, int _zsz){
       //printf("bind tex sampl\n");
       checkOpenGLerror();
       //printf("pre load tex\n");
-      glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, xsz, ysz, zsz, 0, GL_RED, GL_FLOAT, pal);
+      glTexImage3D(GL_TEXTURE_3D, 0, internal_format, xsz, ysz, zsz, 0, format, GL_FLOAT, pal);
       //printf("load tex\n");
       checkOpenGLerror();
    }

@@ -33,9 +33,9 @@ class Texture3D: public Texture{
         int xsz, ysz, zsz;
         //Texture3D(const float* pal, int length, GLenum TexTarget = GL_TEXTURE0);
     public:
-        Texture3D(const float* pal, int xsz, int ysz, int zsz, GLenum _TexTarget = GL_TEXTURE0);
+        Texture3D(const float* pal, int xsz, int ysz, int zsz, GLenum _TexTarget = GL_TEXTURE0, int internal_format = GL_R32F, GLenum format = GL_RED, bool interp_linear =true );
         ~Texture3D(){};
-        void load(const float* pal, int xsz, int ysz, int zsz);
+        void load(const float* pal, int xsz, int ysz, int zsz, int internal_format = GL_R32F, GLenum format = GL_RED);
         int get_xsz();
         int get_ysz();
         int get_zsz();
