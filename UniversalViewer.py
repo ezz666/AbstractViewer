@@ -438,9 +438,9 @@ class UniversalViewer:
     def autoscale(self):
         "Установить пределы по x,y,z чтобы отображаемые данные полностью помещались в окно, устанавливает bb_auto."
         bb_min, bb_max = self.Surf.autobox()
-        self.set_xrange(bb_min[0], bb_max[0])
-        self.set_yrange(bb_min[1], bb_max[1])
-        self.set_zrange(bb_min[2], bb_max[2])
+        self.set_xrange__(bb_min[0], bb_max[0])
+        self.set_yrange__(bb_min[1], bb_max[1])
+        self.set_zrange__(bb_min[2], bb_max[2])
         self.bb_auto = True
         self.V.automove()
     #def autoscalecb(self):
