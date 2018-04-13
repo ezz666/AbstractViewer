@@ -1,12 +1,13 @@
 SHELL:=/bin/bash
 PY_INCLUDE:=/usr/include/python2.7
+#PY_INCLUDE:=/usr/include/python3.6m
 CXX:=g++
 modules:=plottable,shaderprog,viewer_template
 CXX_OPT:=-fopenmp -O3 -fPIC -g -std=c++11 -DPYTHON -I$(PY_INCLUDE) -Wall
 LINK_OPT:= -shared -lpthread -lglut -lGL -lGLU -lGLEW
 all: _viewer.so viewer.py
 viewer_wrap.cxx viewer.py: viewer.i $(shell echo {$(modules)}.hpp)
-	swig -python -c++ -DPYTHON -DPYLIKE_PRINT_R viewer.i
+	swig -python -c++ -DPYTHON viewer.i
 viewer_wrap.o: viewer_wrap.cxx
 	$(CXX) $(CXX_OPT) -o $@ -c $<
 %.o: %.cpp
@@ -21,7 +22,7 @@ _viewer.so: $(shell echo {$(modules)}.o) viewer_wrap.o
 mkextras:=$(firstword $(MAKEFILE_LIST)).extras
 $(shell echo '# This file is generated automatically, do not edit it!' > $(mkextras))
 $(shell echo '# The file contains additional dependencies and rules for building your project.' >> $(mkextras))
-$(shell for m in *.cpp; do $(CXX) $(CXXOPT) -M $$m >> $(mkextras); done)
+$(shell for m in *.cpp; do $(CXX) $(CXX_OPT) -M $$m >> $(mkextras); done)
 include $(mkextras)
 
 clean:

@@ -7,8 +7,8 @@
 %typemap(out) float&  %{ $result = PyFloat_FromDouble ( *$1 ); %}
 %typemap(out) double& %{ $result = PyFloat_FromDouble ( *$1 ); %}
 %feature("autodoc","1");
-%inline %{namespace aiv{}; %}
 %include "carrays.i";
+%array_class(float, float_array);
 %{
 #include "shaderprog.hpp"
 #include "viewer_template.hpp"
@@ -17,4 +17,3 @@
 %include "shaderprog.hpp"
 %include "viewer_template.hpp"
 %include "plottable.hpp"
-%array_class(float, float_array);

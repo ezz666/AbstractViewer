@@ -1,7 +1,11 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 import multiprocessing
-import Queue
+import six
+if six.PY2:
+    import Queue as queue                     
+else:
+    import queue
 import sys
 import time
 #import atexit
@@ -56,7 +60,7 @@ class rl_async_reader:
     def get(self):
         try:
             return self.queue.get_nowait()
-        except (Queue.Empty):
+        except (queue.Empty):
             return ""
     #@threaded
     @async_process
@@ -70,7 +74,10 @@ class rl_async_reader:
         try:
             self.lock.acquire()
             while(1):
-                self.queue.put(raw_input(self.prompt))
+                if six.PY2:
+                    self.queue.put(raw_input(self.prompt))
+                else:
+                    self.queue.put(input(self.prompt))
         except (self.KillException, EOFError, KeyboardInterrupt):
             self.queue.put("exit()")
             self.lock.release()

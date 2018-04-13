@@ -16,6 +16,7 @@ from async_input import *
 from viewer import *
 from string import Formatter
 from math import *
+import six, inspect
 
 def threaded(f):
     def wrap(*args, **kwargs):
@@ -35,7 +36,11 @@ SpecialKeysList = [GLUT_KEY_F1, GLUT_KEY_F2, GLUT_KEY_F3,
         GLUT_KEY_DOWN, GLUT_KEY_PAGE_UP, GLUT_KEY_PAGE_DOWN,
         GLUT_KEY_HOME, GLUT_KEY_END, GLUT_KEY_INSERT]
 def get_arglist(func, ommit_self = True):
-    arglist = func.func_code.co_varnames[:func.func_code.co_argcount]
+    if six.PY2:
+        arglist = inspect.getargspec(func).args
+    else:
+        arglist = list(inspect.signature(func).parameters.keys())
+    #arglist = func.func_code.co_varnames[:func.func_code.co_argcount]
     if ommit_self and arglist and arglist[0]=="self": return arglist[1:]
     else: return arglist
 def func2string(func):
@@ -43,7 +48,7 @@ def func2string(func):
     argum =(" {},"*(len(arglist)-1) + ' {} ') if arglist else ""
     return func.func_name + '('+argum.format(*arglist)+')'
 DefaultKeyMapping = [ ("next()", " "), ("jump(-1)"," ", ["Shift"]),
-        ("keyhelp()","h",["Shift"]), ("exit()", "q",["Shift"]),("keyhelp()","h"), ("exit()", "q"),
+        ("keyhelp()","h",["Shift"]), ("quit()", "q",["Shift"]),("keyhelp()","h"), ("quit()", "q"),
         ("autoscale()","A"), ("autoscale()","A",["Shift"]),
         ("saveimage(get_image_name())","s"), ("saveimage(get_image_name())","s",[ "Shift" ]),
         ("toggle_wire()","w"), ("toggle_wire()","w",["Shift"]),
@@ -137,6 +142,7 @@ class UniversalViewer:
     def execute(self, string, **kwargs):
         "выполняет функции в переменных вьюера, служебная функциия"
         kwargs.update(globals())
+        print(string)
         if isinstance(string, str): exec(string,kwargs,self)
         else: exec(func2string(string), kwargs, self)
         glutPostRedisplay()
@@ -166,7 +172,7 @@ class UniversalViewer:
         nlen = truncate3(len(pal_list))
         pal = float_array(nlen)
         for i, v in enumerate(pal_list[:nlen]): pal[i] = v
-        self.palettes[name] = Texture(pal, nlen/3)
+        self.palettes[name] = Texture(pal, int(nlen/3))
     def eval_template(self, template):
         "Вычисляет значение строки-шаблона"
         return Formatter().vformat(template,[],self)
@@ -180,6 +186,9 @@ class UniversalViewer:
         "Возвращает фунеции для клавиш, служебная функция"
         def KeyHandler(k, x, y):
             #print k
+            if six.PY3:
+                if isinstance(k,bytes):
+                    k = k.decode('ascii')
             if KeyDict == self.KeyDown :
                 self.keystates[k] = True
             elif KeyDict == self.KeyUp:
@@ -343,7 +352,7 @@ class UniversalViewer:
                 command = ""
                 import traceback, sys
                 traceback.print_exception( *sys.exc_info())
-                self.exit()
+                self.quit()
             else: command = self.rl_reader.get()
         cur_time = time.time()
         for i, (name, last_time, interval, action) in enumerate(self.idle_actions):
@@ -465,7 +474,7 @@ class UniversalViewer:
         self._display()
         glutSetWindowTitle(self.get_title())#self.execute(self.title_template))
         glutSwapBuffers()
-    def exit(self):
+    def quit(self):
         "Закрывает окно и завершает програму"
         if (self._closed == True): return
         self._closed = True
@@ -526,7 +535,7 @@ class UniversalViewer:
         self.title_template = template
     def __sigterm_handler(self,signum,frame):
         "Сохранять историю при внезапном закрытии терминала, служебная функция"
-        self.exit()
+        self.quit()
     def __call__(self): # start main loop
         "Запускает mainloop"
         glutSetWindowTitle(self.get_title())#self.exec(self.title_template.format(self.params)))
@@ -539,7 +548,7 @@ class UniversalViewer:
         glutSpecialUpFunc(self.get_key_function( self.SpecialKeyUp))
         glutReshapeFunc(self.V.reshape)
         glutIdleFunc(self.idle)
-        glutCloseFunc(self.exit)
+        glutCloseFunc(self.quit)
         self._t=self.rl_reader()
         signal.signal(signal.SIGHUP,self.__sigterm_handler)
         glutMainLoop()
