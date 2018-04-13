@@ -48,7 +48,7 @@ def func2string(func):
     argum =(" {},"*(len(arglist)-1) + ' {} ') if arglist else ""
     return func.func_name + '('+argum.format(*arglist)+')'
 DefaultKeyMapping = [ ("next()", " "), ("jump(-1)"," ", ["Shift"]),
-        ("keyhelp()","h",["Shift"]), ("quit()", "q",["Shift"]),("keyhelp()","h"), ("quit()", "q"),
+        ("keyhelp()","h",["Shift"]), ("exit()", "q",["Shift"]),("keyhelp()","h"), ("exit()", "q"),
         ("autoscale()","A"), ("autoscale()","A",["Shift"]),
         ("saveimage(get_image_name())","s"), ("saveimage(get_image_name())","s",[ "Shift" ]),
         ("toggle_wire()","w"), ("toggle_wire()","w",["Shift"]),
@@ -352,7 +352,7 @@ class UniversalViewer:
                 command = ""
                 import traceback, sys
                 traceback.print_exception( *sys.exc_info())
-                self.quit()
+                self.exit()
             else: command = self.rl_reader.get()
         cur_time = time.time()
         for i, (name, last_time, interval, action) in enumerate(self.idle_actions):
@@ -474,7 +474,7 @@ class UniversalViewer:
         self._display()
         glutSetWindowTitle(self.get_title())#self.execute(self.title_template))
         glutSwapBuffers()
-    def quit(self):
+    def exit(self):
         "Закрывает окно и завершает програму"
         if (self._closed == True): return
         self._closed = True
@@ -535,7 +535,7 @@ class UniversalViewer:
         self.title_template = template
     def __sigterm_handler(self,signum,frame):
         "Сохранять историю при внезапном закрытии терминала, служебная функция"
-        self.quit()
+        self.exit()
     def __call__(self): # start main loop
         "Запускает mainloop"
         glutSetWindowTitle(self.get_title())#self.exec(self.title_template.format(self.params)))
@@ -548,7 +548,7 @@ class UniversalViewer:
         glutSpecialUpFunc(self.get_key_function( self.SpecialKeyUp))
         glutReshapeFunc(self.V.reshape)
         glutIdleFunc(self.idle)
-        glutCloseFunc(self.quit)
+        glutCloseFunc(self.exit)
         self._t=self.rl_reader()
         signal.signal(signal.SIGHUP,self.__sigterm_handler)
         glutMainLoop()

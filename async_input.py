@@ -13,6 +13,8 @@ import readline
 import rlcompleter
 import signal
 import os
+import ast
+import traceback
 class KillException(Exception):
     pass
 def async_process(f):
@@ -34,6 +36,16 @@ def async_process(f):
         t.start()
         return t
     return wrap
+
+def is_statement(s):
+    try:
+        ast.parse(s)
+        return True
+    except SyntaxError as e:
+        if e.msg ==  "EOL while scanning string literal" and s[-1] == '\\': return False
+        elif e.msg in ["unexpected EOF while parsing", "EOF while scanning triple-quoted string literal"]:
+            return False
+        else: raise e
 
 class rl_async_reader:
     def __init__(self, stdin_fid,history_path,prompt = ">"):
@@ -74,10 +86,25 @@ class rl_async_reader:
         try:
             self.lock.acquire()
             while(1):
-                if six.PY2:
-                    self.queue.put(raw_input(self.prompt))
-                else:
-                    self.queue.put(input(self.prompt))
+                try:
+                    if six.PY2:
+                        s = raw_input(self.prompt)
+                        while(not is_statement(s)):
+                            self.prompt="."
+                            s = s + "\n" + raw_input(self.prompt)
+                        self.prompt=">"
+                        self.queue.put(s)
+                    else:
+                        s = input(self.prompt)
+                        while(not is_statement(s)):
+                            self.prompt="."
+                            s = s + "\n" + input(self.prompt)
+                        self.prompt=">"
+                        self.queue.put(s)
+                except SyntaxError:
+                    traceback.print_exc()
+                except Exception as e:
+                    raise e
         except (self.KillException, EOFError, KeyboardInterrupt):
             self.queue.put("exit()")
             self.lock.release()
