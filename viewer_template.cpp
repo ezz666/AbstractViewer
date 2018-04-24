@@ -32,40 +32,80 @@ glm::quat Viewer::get_rot_tmp() const {
             quatx ;
 }
 //--------------------------------------------------------------------------------
-void Viewer::mouse_click(int button, int state, int x, int y){
-    if (button ==GLUT_LEFT_BUTTON && state == GLUT_DOWN){
-        tr0.x = ((float)x)/min_size*2;
-        tr0.y = ((float)y)/min_size*2;
-        left_click = true;
-    }
-    if (button == GLUT_LEFT_BUTTON && state == GLUT_UP){
-        auto rot_tmp = get_rot_tmp();
-        pos -= glm::inverse(orient*rot_tmp)* glm::vec3(tr*scale,0.f);
-        tr = glm::vec2(0.f);
-        left_click = false;
-    }
-    if (button ==GLUT_RIGHT_BUTTON && state == GLUT_DOWN){
-        ox = ((float)x)/min_size*2;
-        oy = ((float)y)/min_size*2;
-        right_click = true;
-    }
-    if (button ==GLUT_RIGHT_BUTTON && state == GLUT_UP){
-        auto rot_tmp = get_rot_tmp();
-        orient = rot_tmp * orient;
-        rotx = 0.f; roty = 0.f;
-        ox = 0.f; oy = 0.f;
-        right_click = false;
-    }
-    if (button ==3&& state == GLUT_DOWN){
-        //нужно подумать
-        //pos += glm::vec3(0.f,0.f,scale*0.1);
-        scale *= 0.9;
-        reshape(width,height);
-    } else if (button == 4&& state == GLUT_DOWN){
-        scale /=0.9;
-        //pos -= glm::vec3(0.f,0.f,scale*0.1);
-        reshape(width,height);
-    }
+//void Viewer::mouse_click(int button, int state, int x, int y){
+    //if (button ==GLUT_LEFT_BUTTON && state == GLUT_DOWN){
+    //    tr0.x = ((float)x)/min_size*2;
+    //    tr0.y = ((float)y)/min_size*2;
+    //    left_click = true;
+    //}
+    //if (button == GLUT_LEFT_BUTTON && state == GLUT_UP){
+    //    auto rot_tmp = get_rot_tmp();
+    //    pos -= glm::inverse(orient*rot_tmp)* glm::vec3(tr*scale,0.f);
+    //    tr = glm::vec2(0.f);
+    //    left_click = false;
+    //}
+    //if (button ==GLUT_RIGHT_BUTTON && state == GLUT_DOWN){
+    //    ox = ((float)x)/min_size*2;
+    //    oy = ((float)y)/min_size*2;
+    //    right_click = true;
+    //}
+    //if (button ==GLUT_RIGHT_BUTTON && state == GLUT_UP){
+    //    auto rot_tmp = get_rot_tmp();
+    //    orient = rot_tmp * orient;
+    //    rotx = 0.f; roty = 0.f;
+    //    ox = 0.f; oy = 0.f;
+    //    right_click = false;
+    //}
+    //if (button ==3&& state == GLUT_DOWN){
+    //    //нужно подумать
+    //    //pos += glm::vec3(0.f,0.f,scale*0.1);
+    //    scale *= 0.9;
+    //    reshape(width,height);
+    //} else if (button == 4&& state == GLUT_DOWN){
+    //    scale /=0.9;
+    //    //pos -= glm::vec3(0.f,0.f,scale*0.1);
+    //    reshape(width,height);
+    //}
+//}
+//--------------------------------------------------------------------------------
+void Viewer::mouse_left_click(int x, int y){
+    tr0.x = ((float)x)/min_size*2;
+    tr0.y = ((float)y)/min_size*2;
+    left_click = true;
+}
+//--------------------------------------------------------------------------------
+void Viewer::mouse_left_release(int x, int y){
+    auto rot_tmp = get_rot_tmp();
+    pos -= glm::inverse(orient*rot_tmp)* glm::vec3(tr*scale,0.f);
+    tr = glm::vec2(0.f);
+    left_click = false;
+}
+//--------------------------------------------------------------------------------
+void Viewer::mouse_right_click(int x, int y){
+    ox = ((float)x)/min_size*2;
+    oy = ((float)y)/min_size*2;
+    right_click = true;
+}
+//--------------------------------------------------------------------------------
+void Viewer::mouse_right_release(int x, int y){
+    auto rot_tmp = get_rot_tmp();
+    orient = rot_tmp * orient;
+    rotx = 0.f; roty = 0.f;
+    ox = 0.f; oy = 0.f;
+    right_click = false;
+}
+//--------------------------------------------------------------------------------
+void Viewer::mouse_wheel_up(){
+    //нужно подумать
+    //pos += glm::vec3(0.f,0.f,scale*0.1);
+    scale *= 0.9;
+    reshape(width,height);
+}
+//--------------------------------------------------------------------------------
+void Viewer::mouse_wheel_down(){
+    scale /=0.9;
+    //pos -= glm::vec3(0.f,0.f,scale*0.1);
+    reshape(width,height);
 }
 //--------------------------------------------------------------------------------
 void Viewer::drag(int x, int y){
@@ -85,7 +125,7 @@ void Viewer::drag(int x, int y){
         //rotate(ox,py,px);
         //calc_mvp();
     }
-    glutPostRedisplay();
+    //glutPostRedisplay();
 }
 void Viewer::GL_init(){
     checkOpenGLerror();
@@ -105,7 +145,6 @@ void Viewer::GL_init(){
     //glBlendFunc(GL_ONE, GL_ONE);
     glewInit();
     checkOpenGLerror();
-    //printf("init end\n");
 }
 //--------------------------------------------------------------------------------
 //i==0,1,2 — min x,y,z
@@ -115,7 +154,9 @@ void Viewer::clip_plane_move(float shift, int num){
     else max[num%3] += shift*scale;
 }
 //--------------------------------------------------------------------------------
-Viewer::Viewer(){
+Viewer::Viewer() {
+    //wxGLContextAttrs cxtAttrs;
+    //cxtAttrs.CoreProfile().OGLVersion(3, 3).EndList();
     rotx=0.0f; roty=0.0f;
     ox = 0.f; oy = 0.f;
     scale = 1.f;
@@ -131,7 +172,7 @@ Viewer::Viewer(){
     ort = glm::ortho(-1,1,-1,1,1,-1); //z is also inverted by glm
     background = glm::vec3(1.f,1.f,1.f);
     axis_sw = false;
-    checkOpenGLerror();
+    //checkOpenGLerror();
 }
 //--------------------------------------------------------------------------------
 void Viewer::get_background(float &r, float &g, float &b){
@@ -145,7 +186,7 @@ void Viewer::set_background(float r, float g, float b){
 }
 //--------------------------------------------------------------------------------
 Viewer::~Viewer(){
-    // there is nithing to clean;
+    // there is nothing to clean;
 }
 //--------------------------------------------------------------------------------
 const glm::mat4 Viewer::calc_mvp(){
@@ -253,12 +294,15 @@ void Viewer::_reshape(int w, int h){
 //--------------------------------------------------------------------------------
 void Viewer::reshape(int w, int h){
     _reshape(w,h);
-    glutPostRedisplay();
+    //glutPostRedisplay();
 }
 //--------------------------------------------------------------------------------
 void Viewer::axis_switch(){
     axis_sw = !axis_sw;
-    int sf = axis_sw?10:1; glViewport(0, 0, width/sf, height/sf);
+    int sf = axis_sw?10:1;
+    glViewport(0, 0, width/sf, height/sf);
+    if (!axis_sw) glDepthFunc(GL_LEQUAL);
+    else glDepthFunc(GL_GREATER);
 }
 //--------------------------------------------------------------------------------
 float Viewer::get_scale() const{
@@ -302,18 +346,6 @@ std::string read_string(){
     std::cin>>input_command;
     return input_command;
 };
-//--------------------------------------------------------------------------------
-std::string Viewer::get_command(){
-    std::string com;
-    if (!command_fut.valid()) {
-        command_fut = std::async(std::launch::async, read_string);
-        com = std::string("");
-    }
-    std::chrono::milliseconds span (1);
-    bool done = (command_fut.wait_for(span) == std::future_status::ready);
-    if (done) com = command_fut.get();
-    return com;
-}
 //--------------------------------------------------------------------------------
 void Viewer::automove(){
     glm::vec3 cent = (max + min)*0.5f;

@@ -208,6 +208,7 @@ void Texture::load(const float* pal,  int length){
    glBindTexture(GL_TEXTURE_1D, textureID);
    glBindSampler(TexTarget-GL_TEXTURE0, samplerID);
    if (tex_len>0){
+      glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, tex_len, 0, GL_RGB, GL_FLOAT, pal);
       glBindTexture(GL_TEXTURE_1D, textureID);
       checkOpenGLerror();
       glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, tex_len, 0, GL_RGB, GL_FLOAT, pal);

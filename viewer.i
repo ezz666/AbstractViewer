@@ -9,6 +9,7 @@
 %feature("autodoc","1");
 %include "carrays.i";
 %array_class(float, float_array);
+%array_class(int, int_array);
 %{
 #include "shaderprog.hpp"
 #include "viewer_template.hpp"

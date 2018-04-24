@@ -1,19 +1,21 @@
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python2 # -*- coding: utf-8 -*-
 # we assume that all libs imported in advance, since they all building in one file
 # in addition we assume that all neded objects are in defaul namespace
-from OpenGL.GLUT import *
+#from OpenGL.GLUT import *
 import os.path
 from PIL import Image
 from OpenGL import GL
+#import wx
+#from wx import glcanvas
 #from aivlib.vctf3 import *
 #from collections import MutableMapping
+import sys
 import time
 import signal
 import multiprocessing
 import threading
 from async_input import *
-from viewer import *
+from core import *
 from string import Formatter
 from math import *
 import six, inspect
@@ -29,12 +31,14 @@ def threaded(f):
     return wrap
 
 KeysList = " `1234567890qwertyuiop[]asdfghjkl;'xcvbnm,,./~!@#$%^&*()_-+QWERTYUIOP{}ASDFGHJKL:\"|\\ZXCVBNM<>?"
-SpecialKeysList = [GLUT_KEY_F1, GLUT_KEY_F2, GLUT_KEY_F3,
-        GLUT_KEY_F4, GLUT_KEY_F5, GLUT_KEY_F6, GLUT_KEY_F7,
-        GLUT_KEY_F8, GLUT_KEY_F9, GLUT_KEY_F10, GLUT_KEY_F11,
-        GLUT_KEY_F12, GLUT_KEY_LEFT, GLUT_KEY_UP, GLUT_KEY_RIGHT,
-        GLUT_KEY_DOWN, GLUT_KEY_PAGE_UP, GLUT_KEY_PAGE_DOWN,
-        GLUT_KEY_HOME, GLUT_KEY_END, GLUT_KEY_INSERT]
+SpecialKeysList = [
+        "F1", "F2", "F3",
+        "F4", "F5", "F6", "F7",
+        "F8", "F9", "F10", "F11",
+        "F12", "LEFT", "UP", "RIGHT",
+        "DOWN", "PAGE_UP", "PAGE_DOWN",
+        "HOME", "END", "INSERT"
+    ]
 def get_arglist(func, ommit_self = True):
     if six.PY2:
         arglist = inspect.getargspec(func).args
@@ -47,42 +51,42 @@ def func2string(func):
     arglist = get_arglist(func)
     argum =(" {},"*(len(arglist)-1) + ' {} ') if arglist else ""
     return func.func_name + '('+argum.format(*arglist)+')'
-DefaultKeyMapping = [ ("next()", " "), ("jump(-1)"," ", ["Shift"]),
+DefaultKeyMapping = [# ("next()", " "), ("jump(-1)"," ", ["Shift"]),
         ("keyhelp()","h",["Shift"]), ("exit()", "q",["Shift"]),("keyhelp()","h"), ("exit()", "q"),
-        ("autoscale()","A"), ("autoscale()","A",["Shift"]),
+        ("autoscale()","a",["Shift"]),
+        ("autoscale()","A",["Shift"]),
         ("saveimage(get_image_name())","s"), ("saveimage(get_image_name())","s",[ "Shift" ]),
         ("toggle_wire()","w"), ("toggle_wire()","w",["Shift"]),
         ("ax^=True","c"), ("ax^=True","c",["Shift"]),
-        ("rotate(-10,0)", GLUT_KEY_LEFT), ("rotate(10,0)", GLUT_KEY_RIGHT),
-        ("rotate(0,-10)", GLUT_KEY_UP), ("rotate(0,10)", GLUT_KEY_DOWN),
-        ("zoom(10)", GLUT_KEY_UP,["Ctrl"]), ("zoom(-10)", GLUT_KEY_DOWN, ["Ctrl"]),
-        ("move(0,-10)", GLUT_KEY_UP,["Shift"]), ("move(0,10)", GLUT_KEY_DOWN, ["Shift"]),
-        ("move(10,0)", GLUT_KEY_RIGHT,["Shift"]), ("move(-10,0)", GLUT_KEY_LEFT, ["Shift"]),
-        ("clip_plane_move(0.01,0)", GLUT_KEY_RIGHT,[],["1"]), ("clip_plane_move(-0.01,0)", GLUT_KEY_LEFT, [],["1"]),
-        ("clip_plane_move(0.01,1)", GLUT_KEY_RIGHT,[],["2"]), ("clip_plane_move(-0.01,1)", GLUT_KEY_LEFT, [],["2"]),
-        ("clip_plane_move(0.01,2)", GLUT_KEY_RIGHT,[],["3"]), ("clip_plane_move(-0.01,2)", GLUT_KEY_LEFT, [],["3"]),
-        ("clip_plane_move(0.01,3)", GLUT_KEY_RIGHT,[],["4"]), ("clip_plane_move(-0.01,3)", GLUT_KEY_LEFT, [],["4"]),
-        ("clip_plane_move(0.01,4)", GLUT_KEY_RIGHT,[],["5"]), ("clip_plane_move(-0.01,4)", GLUT_KEY_LEFT, [],["5"]),
-        ("clip_plane_move(0.01,5)", GLUT_KEY_RIGHT,[],["6"]), ("clip_plane_move(-0.01,5)", GLUT_KEY_LEFT, [],["6"]) ]
+        ("rotate(-10,0)", "LEFT"), ("rotate(10,0)", "RIGHT"),
+        ("rotate(0,-10)", "UP"), ("rotate(0,10)", "DOWN"),
+        ("zoom(10)", "UP",["Ctrl"]), ("zoom(-10)", "DOWN", ["Ctrl"]),
+        ("move(0,-10)", "UP",["Shift"]), ("move(0,10)", "DOWN", ["Shift"]),
+        ("move(10,0)", "RIGHT",["Shift"]), ("move(-10,0)", "LEFT", ["Shift"]),
+        ("clip_plane_move(0.01,0)", "RIGHT",[],["1"]), ("clip_plane_move(-0.01,0)", "LEFT", [],["1"]),
+        ("clip_plane_move(0.01,1)", "RIGHT",[],["2"]), ("clip_plane_move(-0.01,1)", "LEFT", [],["2"]),
+        ("clip_plane_move(0.01,2)", "RIGHT",[],["3"]), ("clip_plane_move(-0.01,2)", "LEFT", [],["3"]),
+        ("clip_plane_move(0.01,3)", "RIGHT",[],["4"]), ("clip_plane_move(-0.01,3)", "LEFT", [],["4"]),
+        ("clip_plane_move(0.01,4)", "RIGHT",[],["5"]), ("clip_plane_move(-0.01,4)", "LEFT", [],["5"]),
+        ("clip_plane_move(0.01,5)", "RIGHT",[],["6"]), ("clip_plane_move(-0.01,5)", "LEFT", [],["6"]) 
+        ]
 # add cutting surfaces
 SurfTemplateKeys =  [ ("extendrange(1.1)","+",["Ctrl"]), ("extendrange(1.1)","+",["Ctrl","Shift"]),
         ("extendrange(1/1.1)","-",["Ctrl"]), ("extendrange(1/1.1)","-",["Ctrl","Shift"]),
-        ("rangemove(1/1.1-1.0,True)","{",["Shift"]), ("rangemove(1/1.1-1.0,True)","{"),
-        ("rangemove(1/1.1-1.0,False)","}",["Shift"]), ("rangemove(1/1.1-1.0,False)","}"),
-        ("rangemove(0.1,True)","[",["Shift"]), ("rangemove(0.1,True)","["),
-        ("rangemove(0.1,False)","]",["Shift"]), ("rangemove(0.1,False)","]") ]
+        ("rangemove(1/1.1-1.0,True)","{",["Shift"]),
+        ("rangemove(1/1.1-1.0,True)","["),
+        ("rangemove(1/1.1-1.0,False)","}",["Shift"]),
+        ("rangemove(1/1.1-1.0,False)","]"),
+        ("rangemove(0.1,True)","[",["Shift"]),
+        ("rangemove(0.1,True)","{"),
+        ("rangemove(0.1,False)","]",["Shift"]),
+        ("rangemove(0.1,False)","}")
+        ]
 
 class UniversalViewer:
-    def __init__(self, argv):
-        glutInitContextVersion(3,3)
-        glutInitContextProfile(GLUT_CORE_PROFILE)
-        glutInit(argv)
-        self.V = Viewer()
-        glutInitWindowSize(self.V.get_width(), self.V.get_height())
-        glutInitDisplayMode(GLUT_RGBA|GLUT_DOUBLE|GLUT_DEPTH)
-        glutCreateWindow("viewer")
+    def AbstractInit(self):
         self.V.GL_init()
-        self.spr = ShaderProg()
+        self.spr = Shader()
         checkOpenGLerror()
         self.palettes = {}
         self.add_pal("pal", [1.,0.,0., 1.,.5,0., 1.,1.,0., 0.,1.,0., 0.,1.,1., 0.,0.,1., 1.,0.,1.])
@@ -90,7 +94,7 @@ class UniversalViewer:
         checkOpenGLerror()
         self.Axis = Axis()
         checkOpenGLerror()
-        self.rl_reader = rl_async_reader(sys.stdin.fileno(), os.path.expanduser("~/.{}_history".format(os.path.basename(argv[0]))))
+        self.rl_reader = rl_async_reader(sys.stdin.fileno(), os.path.expanduser("~/.{}_history".format(os.path.basename(sys.argv[0]))))
         self.Axis.load_on_device()
         checkOpenGLerror()
         self.savebuffer = FrameBuffer(self.V.get_width(), self.V.get_height());
@@ -114,7 +118,35 @@ class UniversalViewer:
         self.buffers = {}
         self.buffer = None
         self.namespace = {}
-#--------------------------------------------------------------
+    def Bind(self):
+        pass
+    def SetWindowTitle(self, string):
+        pass
+    #def OnInit(self):
+    #    frame = wx.Frame(None, -1, "RunDemo: ", pos=(0,0),
+    #                    style=wx.DEFAULT_FRAME_STYLE, name="run a sample")
+    #    #frame.CreateStatusBar()
+
+    #    frame.Bind(wx.EVT_CLOSE, self.OnExitApp)
+
+
+    #    # set the frame to a good size for showing the two buttons
+    #    frame.SetSize((900,900))
+    #    #win.SetFocus()
+    #    #self.window = win
+    #    #frect = frame.GetRect()
+    #    #glarglist = int_array(len(attrib_list))
+    #    #for i, v in enumerate(attrib_list):
+    #    #    glarglist[i] = v
+    #    frame.Show(True)
+    #    frame.SetFocus()
+    #    self.V = Scene(frame)#, glarglist)
+    #    self.V.Bind(wx.EVT_PAINT, self.OnPaint)
+    #    self.frame = frame
+    #    self.SetTopWindow(frame)
+    #    return True
+        
+#-------------------------------------------------------------
     def __setattr__(self,name,value):
         self.__dict__[name] = value
     def __setitem__(self, key, value):
@@ -142,14 +174,15 @@ class UniversalViewer:
     def execute(self, string, **kwargs):
         "выполняет функции в переменных вьюера, служебная функциия"
         kwargs.update(globals())
-        print(string)
+        #print(string)
         if isinstance(string, str): exec(string,kwargs,self)
         else: exec(func2string(string), kwargs, self)
-        glutPostRedisplay()
+        #glutPostRedisplay()
+        self.V.update()
     def evaluate(self, mystring, **kwargs):
         "вычисляет выражение в переменных вьюера, служебная функциия"
         kwargs.update(globals())
-        print(mystring)
+        #print(mystring)
         if isinstance(mystring, str): return eval(mystring,kwargs,self)
         else: return eval(func2string(mystring), kwargs, self)
     def set_key(self, func, key, modificators = [], key_pressed = [], up = False):
@@ -161,9 +194,8 @@ class UniversalViewer:
         KeysDict = (self.KeyDown, self.KeyUp, self.SpecialKeyDown, self.SpecialKeyUp)[ int(key in SpecialKeysList) *2 + int(up)]
         KeysDict[key].append((func, modificators, key_pressed))
 #-------------------------------------------------------------
-    def states(self):
+    def states(self,state):
         "Возвращает состояние клавиш модификаторов в словаре"
-        state = glutGetModifiers()
         return {"Shift":bool(state & 0x1), "Ctrl":bool(state & 0x2), "Alt":bool(state & 0x4)}
     def add_pal(self, name, pal_list):
         '''Добавляет палитру с именем name и цветами заданными в виде списка float со значениями от 0 до 1,
@@ -184,8 +216,8 @@ class UniversalViewer:
         return self.eval_template(self.title_template)
     def get_key_function(self, KeyDict):
         "Возвращает фунеции для клавиш, служебная функция"
-        def KeyHandler(k, x, y):
-            #print k
+        def KeyHandler(k, x, y, mod):
+            #print(k, mod)
             if six.PY3:
                 if isinstance(k,bytes):
                     k = k.decode('ascii')
@@ -195,25 +227,27 @@ class UniversalViewer:
                 self.keystates[k] = False
                 self.keystates[k.upper()] = False
             if k not in KeyDict or not KeyDict[k]: return
-            mod = self.states()
+            #mod = self.states()
             for func, modifiers, key_pressed in KeyDict[k]:
                 execute = True
-                #print func, k
+                #print( func, k)
                 for m in ["Ctrl", "Shift", "Alt"]:
                     execute &= (mod[m] == (m in modifiers))
-                    #print mod[m] == (m in modifiers)
+                    #print(mod[m] == (m in modifiers), mod[m], execute)
                     if not execute: break
                 #print execute, modifiers, mod
                 for kp in KeysList:
                     if (kp == k): continue
                     execute &= (self.keystates[kp] == (kp in key_pressed))
                     if not execute: break
-                #print execute, key_pressed
+                #print( execute, key_pressed)
                 if execute:
                     #func_run(func, x=x, y = y, **self.params)
                     self.execute(func, x=x,y=y)
+                    #print("Executing", func)
                     break
-            glutPostRedisplay()
+            self.V.update()
+            #glutPostRedisplay()
         return KeyHandler
     def help(self, myobject=None):
         "Показать справку на обьект"
@@ -311,31 +345,31 @@ class UniversalViewer:
     def toggle_axis(self):
         "Переключает отображение осей"
         self.ax^=1
-    def __mouse_click(self, but, ud, x,y):
-        "Функция для мышки, служебная функция"
-        if but in [GLUT_LEFT_BUTTON, 3,4] and ud == GLUT_DOWN:
-            self.bb_auto=False
-        self.V.mouse_click(but, ud, x, y)
+    #def __mouse_click(self, but, ud, x,y):
+    #    "Функция для мышки, служебная функция"
+    #    #If but in [GLUT_LEFT_BUTTON, 3,4] and ud == GLUT_DOWN:
+    #    #    self.bb_auto=False
+    #    #Self.V.mouse_click(but, ud, x, y)
     def rotate(self, x, y):
         "Поворот, в координатах окна"
         x_min = 0 if x>=0 else -x
         y_min = 0 if y>=0 else -y
-        self.V.mouse_click(GLUT_RIGHT_BUTTON, GLUT_DOWN, x_min,y_min )
+        self.V.mouse_right_click(x_min,y_min )
         self.V.drag(x+x_min,y)
-        self.V.mouse_click(GLUT_RIGHT_BUTTON, GLUT_UP, x+x_min,y_min)
+        self.V.mouse_right_release(x+x_min,y_min)
     def move(self, x, y):
         "Перемещение, в координатах окна"
         self.bb_auto=False
         x_min = 0 if x>=0 else -x
         y_min = 0 if y>=0 else -y
-        self.V.mouse_click(GLUT_LEFT_BUTTON,GLUT_DOWN,x_min,y_min)
+        self.V.mouse_left_click(x_min,y_min)
         self.V.drag(x,y)
-        self.V.mouse_click(GLUT_LEFT_BUTTON,GLUT_UP,x,y)
+        self.V.mouse_left_release(x,y)
     def zoom(self, x):
         "Зум, в координатах окна, положительное приблидает, отрицательное отдаляет, величина игнорируется"
         self.bb_auto=False
-        if x<0: self.V.mouse_click(4,GLUT_DOWN,0,0)
-        else: self.V.mouse_click(3,GLUT_DOWN,0,0)
+        if x<0: self.V.mouse_wheel_down()
+        else: self.V.mouse_wheel_up()
     def idle(self):
         "Функция idle для окна"
         command = self.rl_reader.get()
@@ -418,7 +452,8 @@ class UniversalViewer:
             self.load_params(**self.buffers[name][0])
         print("Save", self.buffer)
         self.buffers[name] = ( self.dump_params(**SaveDict), SaveDict )
-        glutPostRedisplay()
+        #glutPostRedisplay()
+        self.V.update()
     def next_buffer(self, save=True):
         "Переключает на следующее отображение и сохраняет текущее если Save установлен"
         if not self.buffers: return
@@ -454,26 +489,27 @@ class UniversalViewer:
         self.Surf.display(self.V, self.spr, self.tex)
         if self.ax:
             self.V.axis_switch()
-            GL.glDepthFunc(GL.GL_GREATER) # Overdraw)
+            #GL.glDepthFunc(GL.GL_GREATER) # Overdraw)
             #self.spr.render(self.Axis, self.V, self.palettes["rgb"]) # replace it with single functions
             self.spr.start()
             self.palettes["rgb"].use_texture(self.spr,"pal")
             self.V.plot(self.spr)
             self.Axis.plot(self.spr)
             self.spr.stop()
-            GL.glDepthFunc(GL.GL_LEQUAL)
-            #self.spr.render(self.Axis, self.V, self.palettes["rgb"])
-            self.spr.start()
-            self.palettes["rgb"].use_texture(self.spr,"pal")
-            self.V.plot(self.spr)
-            self.Axis.plot(self.spr)
-            self.spr.stop()
+            #GL.glDepthFunc(GL.GL_LEQUAL)
+            ##self.spr.render(self.Axis, self.V, self.palettes["rgb"])
+            #self.spr.start()
+            #self.palettes["rgb"].use_texture(self.spr,"pal")
+            #self.V.plot(self.spr)
+            #self.Axis.plot(self.spr)
+            #self.spr.stop()
             self.V.axis_switch()
     def display(self):
         "Функция display для окна, служебная функция"
         self._display()
-        glutSetWindowTitle(self.get_title())#self.execute(self.title_template))
-        glutSwapBuffers()
+        #glutSetWindowTitle(self.get_title())#self.execute(self.title_template))
+        self.SetWindowTitle(self.get_title())
+        self.V.SwapBuffers()
     def exit(self):
         "Закрывает окно и завершает програму"
         if (self._closed == True): return
@@ -482,7 +518,9 @@ class UniversalViewer:
         self.rl_reader.lock.acquire()
         self.rl_reader.lock.release()
         self._t.join()
-        glutLeaveMainLoop()
+        #glutLeaveMainLoop()
+        self.frame.Close(True)
+        self.ExitMainLoop()
     def keyhelp(self):
         "Выводит справку по привязкам клавиш"
 #тут не хватает нормального форматирования для комбинаций клавиш
@@ -536,20 +574,23 @@ class UniversalViewer:
     def __sigterm_handler(self,signum,frame):
         "Сохранять историю при внезапном закрытии терминала, служебная функция"
         self.exit()
+
     def __call__(self): # start main loop
         "Запускает mainloop"
-        glutSetWindowTitle(self.get_title())#self.exec(self.title_template.format(self.params)))
-        glutDisplayFunc(self.display)
-        glutMotionFunc(self.V.drag)
-        glutMouseFunc(self.__mouse_click)
-        glutKeyboardFunc(self.get_key_function( self.KeyDown))
-        glutKeyboardUpFunc(self.get_key_function( self.KeyUp))
-        glutSpecialFunc(self.get_key_function( self.SpecialKeyDown))
-        glutSpecialUpFunc(self.get_key_function( self.SpecialKeyUp))
-        glutReshapeFunc(self.V.reshape)
-        glutIdleFunc(self.idle)
-        glutCloseFunc(self.exit)
+        #glutSetWindowTitle(self.get_title())#self.exec(self.title_template.format(self.params)))
+        #glutDisplayFunc(self.display)
+        #glutMotionFunc(self.V.drag)
+        #glutMouseFunc(self.__mouse_click)
+        #glutKeyboardFunc(self.get_key_function( self.KeyDown))
+        #glutKeyboardUpFunc(self.get_key_function( self.KeyUp))
+        #glutSpecialFunc(self.get_key_function( self.SpecialKeyDown))
+        #glutSpecialUpFunc(self.get_key_function( self.SpecialKeyUp))
+        #glutReshapeFunc(self.V.reshape)
+        #glutIdleFunc(self.idle)
+        #glutCloseFunc(self.exit)
         self._t=self.rl_reader()
         signal.signal(signal.SIGHUP,self.__sigterm_handler)
-        glutMainLoop()
+        self.Bind()
+        self.MainLoop()
+        #glutMainLoop()
 

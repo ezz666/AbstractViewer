@@ -7,7 +7,7 @@
 #define Sens ((float)(180.f/M_PI))
 #endif //DEBIAN
 #include <GL/glew.h>
-#include <GL/glut.h>
+//#include <GL/glut.h>
 #include <GL/glu.h>
 #include <glm/glm.hpp>
 //#include <glm/gtx/projection.hpp>
@@ -46,7 +46,7 @@ struct vertex{
 //--------------------------------------------------------------------------------
 //VIEWER
 //--------------------------------------------------------------------------------
-class Viewer{
+class Viewer {
     private:
         float rotx, roty;
         float  ox, oy;
@@ -60,7 +60,7 @@ class Viewer{
         //      unif_minmax;
         glm::quat orient;
         glm::mat4 MVP,Model,ort;
-        std::future<std::string> command_fut;
+        //std::future<std::string> command_fut;
         GLint mvp_loc, model_loc, it_mvp_loc, vmin, vmax, vport, unif_scale;
         glm::vec3 background;
         void _reshape(int w, int h);
@@ -99,7 +99,7 @@ class Viewer{
         //void set_xrange(float lower, float upper);
         //void set_yrange(float lower, float upper);
         //void set_zrange(float lower, float upper);
-        std::string get_command();
+        //std::string get_command();
         //void rotate(  float x, float y, float z);
         const glm::mat4 calc_mvp();
         const glm::mat4 calc_itmvp() const;
@@ -111,7 +111,12 @@ class Viewer{
         //template<class T> void autoscale(SurfTemplate<T> * Sur);
         //template<class T> void setminmax(SurfTemplate<T> * Sur);
         void drag(int x,int y);
-        void mouse_click(int button, int state, int x, int y);
+        void mouse_left_click(int x, int y);
+        void mouse_left_release(int x, int y);
+        void mouse_right_click(int x, int y);
+        void mouse_right_release(int x, int y);
+        void mouse_wheel_up();
+        void mouse_wheel_down();
         void clip_plane_move(float shift, int num);
         void plot(ShaderProg * spr);
         void display(void);
