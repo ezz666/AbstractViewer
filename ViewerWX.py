@@ -33,6 +33,7 @@ class ViewerWX(UniversalViewer, wx.App):
         frame.Show(True)
         frame.SetFocus()
         self.V = SceneWX(frame)#, glarglist)
+        self.V.SetFocus()
         self.frame = frame
         self.SetTopWindow(frame)
         self.AbstractInit()
@@ -64,6 +65,7 @@ class ViewerWX(UniversalViewer, wx.App):
         self.V.Bind(wx.EVT_KEY_DOWN,self.OnKeyDown)
         #print(self.SpecialKeyDown)
         self.V.Bind(wx.EVT_KEY_UP,self.OnKeyUp)
+        self.frame.Bind(wx.EVT_IDLE, self.OnIdle)
     def SetWindowTitle(self, string):
         self.frame.SetTitle(string)
     def OnExitApp(self, evt):
@@ -71,6 +73,8 @@ class ViewerWX(UniversalViewer, wx.App):
     def OnSize(self, event):
         self.V.reshape()
         #event.Skip()
+    def OnIdle(self, event):
+        self.idle()
     def OnKey(self,evt):
         k = evt.GetUnicodeKey()
         sp_key=(k==0)
