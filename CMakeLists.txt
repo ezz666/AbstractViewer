@@ -30,3 +30,12 @@ SWIG_ADD_LIBRARY(viewer
 )
 #swig_add_module(viewer python viewer.i plottable.cpp shaderprog.cpp viewer_template.cpp) # DEPRECATED but may be useful for old versions
 swig_link_libraries(viewer ${PYTHON_LIBRARIES} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES})
+configure_file(UniversalViewer.py ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+configure_file(SceneWX.py ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+configure_file(async_input.py ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+configure_file(ViewerWX.py ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+configure_file(core.py ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+configure_file(f.shader ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+configure_file(fragment_index.shader ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+configure_file(v.shader ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+configure_file(vertex_index.shader ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
