@@ -122,6 +122,8 @@ class UniversalViewer:
         pass
     def SetWindowTitle(self, string):
         pass
+    def WakeUp(self):
+        pass
     #def OnInit(self):
     #    frame = wx.Frame(None, -1, "RunDemo: ", pos=(0,0),
     #                    style=wx.DEFAULT_FRAME_STYLE, name="run a sample")
@@ -512,15 +514,7 @@ class UniversalViewer:
         self.V.SwapBuffers()
     def exit(self):
         "Закрывает окно и завершает програму"
-        if (self._closed == True): return
-        self._closed = True
-        os.kill(self._t.pid,signal.SIGHUP)
-        self.rl_reader.lock.acquire()
-        self.rl_reader.lock.release()
-        self._t.join()
-        #glutLeaveMainLoop()
-        self.frame.Close(True)
-        self.ExitMainLoop()
+        pass
     def keyhelp(self):
         "Выводит справку по привязкам клавиш"
 #тут не хватает нормального форматирования для комбинаций клавиш

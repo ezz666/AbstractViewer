@@ -39,6 +39,8 @@ class ViewerWX(UniversalViewer, wx.App):
         self.AbstractInit()
         #self.Bind()
         return True
+    def WakeUp(self):
+        wx.WakeUpIdle()
     def OnPaint(self, event):
         self.Draw()
     def Draw(self):
@@ -66,6 +68,24 @@ class ViewerWX(UniversalViewer, wx.App):
         #print(self.SpecialKeyDown)
         self.V.Bind(wx.EVT_KEY_UP,self.OnKeyUp)
         self.frame.Bind(wx.EVT_IDLE, self.OnIdle)
+        self.timer = wx.Timer(self)
+        self.frame.Bind(wx.EVT_TIMER, self.OnTimer)
+        self.timer.Start(42)
+    def exit(self):
+        "Закрывает окно и завершает програму"
+        if (self._closed == True): return
+        self._closed = True
+        os.kill(self._t.pid,signal.SIGHUP)
+        self.rl_reader.lock.acquire()
+        self.rl_reader.lock.release()
+        self._t.join()
+        #glutLeaveMainLoop()
+        self.frame.Show(True)
+        self.frame.SetFocus()
+        self.frame.Close(True)
+        self.ExitMainLoop()
+    def OnTimer(self, evt):
+        self.WakeUp()
     def SetWindowTitle(self, string):
         self.frame.SetTitle(string)
     def OnExitApp(self, evt):

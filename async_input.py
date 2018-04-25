@@ -48,7 +48,7 @@ def is_statement(s):
         else: raise e
 
 class rl_async_reader:
-    def __init__(self, stdin_fid,history_path,prompt = ">"):
+    def __init__(self,stdin_fid,history_path,prompt = ">"):
         self.stdin_fid = stdin_fid
         self.history_path = history_path
         self.prompt = prompt
@@ -69,6 +69,8 @@ class rl_async_reader:
         raise self.KillException
     def pre_input_hook(self):
         signal.signal(signal.SIGHUP, self.kill_handler)
+    def execute(self, command):
+        self.queue.put(command)
     def get(self):
         try:
             return self.queue.get_nowait()
@@ -93,19 +95,19 @@ class rl_async_reader:
                             self.prompt="."
                             s = s + "\n" + raw_input(self.prompt)
                         self.prompt=">"
-                        self.queue.put(s)
+                        self.execute(s)
                     else:
                         s = input(self.prompt)
                         while(not is_statement(s)):
                             self.prompt="."
                             s = s + "\n" + input(self.prompt)
                         self.prompt=">"
-                        self.queue.put(s)
-                except SyntaxError:
+                        self.execute(s)
+                except SyntaxError as e:
                     traceback.print_exc()
                 except Exception as e:
                     raise e
         except (self.KillException, EOFError, KeyboardInterrupt):
-            self.queue.put("exit()")
             self.lock.release()
+            self.queue.put("exit()")
             self.write_history()
