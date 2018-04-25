@@ -345,7 +345,7 @@ std::string read_string(){
     std::string input_command;
     std::cin>>input_command;
     return input_command;
-};
+}
 //--------------------------------------------------------------------------------
 void Viewer::automove(){
     glm::vec3 cent = (max + min)*0.5f;
