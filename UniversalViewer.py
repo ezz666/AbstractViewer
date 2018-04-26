@@ -415,6 +415,11 @@ class UniversalViewer:
     def plot(self,surf):
         "Устанавливает данне для отображения"
         self.Surf = surf
+        self.Surf._load_on_device = self.Surf.load_on_device
+        def myload():
+            self.Surf._load_on_device()
+            self.V.update()
+        self.Surf.load_on_device = myload
         self.Surf.load_on_device()
     #def subplot(*args);
     #    self.Surfaces += args
