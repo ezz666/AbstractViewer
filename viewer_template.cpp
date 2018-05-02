@@ -16,23 +16,40 @@ void checkOpenGLerror()
         std::cout << "OpenGl error! - " << gluErrorString(errCode)<<std::endl;
 }
 //--------------------------------------------------------------------------------
-void Viewer::togglewire() {
+void Viewer3D::togglewire() {
     set_wire(!wire);
 }
-void Viewer::set_wire(bool tf){
+void Viewer3D::set_wire(bool tf){
     wire = tf;
     glPolygonMode(GL_FRONT_AND_BACK, wire ? GL_LINE : GL_FILL);
 }
 //--------------------------------------------------------------------------------
+void Viewer::get_background(float &r, float &g, float &b){
+    r = background.x;
+    g = background.y;
+    b = background.z;
+}
+//--------------------------------------------------------------------------------
+void Viewer::set_background(float r, float g, float b){
+    background = glm::vec3(r, g, b);
+}
+//--------------------------------------------------------------------------------
+void Viewer::set_scale(float sc){
+    this->scale = sc;
+}
+float Viewer::get_scale() const{
+    return scale;
+}
+//--------------------------------------------------------------------------------
 //Повороты
 //--------------------------------------------------------------------------------
-glm::quat Viewer::get_rot_tmp() const {
+glm::quat Viewer3D::get_rot_tmp() const {
         glm::quat quatx = glm::angleAxis(rotx*Sens, glm::vec3(1.f,0.f,0.f));
         return glm::angleAxis(roty*Sens, quatx * glm::vec3(0.f,1.f,0.f) /* quatx*/) * // y is inversed
             quatx ;
 }
 //--------------------------------------------------------------------------------
-//void Viewer::mouse_click(int button, int state, int x, int y){
+//void Viewer3D::mouse_click(int button, int state, int x, int y){
     //if (button ==GLUT_LEFT_BUTTON && state == GLUT_DOWN){
     //    tr0.x = ((float)x)/min_size*2;
     //    tr0.y = ((float)y)/min_size*2;
@@ -68,26 +85,26 @@ glm::quat Viewer::get_rot_tmp() const {
     //}
 //}
 //--------------------------------------------------------------------------------
-void Viewer::mouse_left_click(int x, int y){
+void Viewer3D::mouse_left_click(int x, int y){
     tr0.x = ((float)x)/min_size*2;
     tr0.y = ((float)y)/min_size*2;
     left_click = true;
 }
 //--------------------------------------------------------------------------------
-void Viewer::mouse_left_release(int x, int y){
+void Viewer3D::mouse_left_release(int x, int y){
     auto rot_tmp = get_rot_tmp();
     pos -= glm::inverse(orient*rot_tmp)* glm::vec3(tr*scale,0.f);
     tr = glm::vec2(0.f);
     left_click = false;
 }
 //--------------------------------------------------------------------------------
-void Viewer::mouse_right_click(int x, int y){
+void Viewer3D::mouse_right_click(int x, int y){
     ox = ((float)x)/min_size*2;
     oy = ((float)y)/min_size*2;
     right_click = true;
 }
 //--------------------------------------------------------------------------------
-void Viewer::mouse_right_release(int x, int y){
+void Viewer3D::mouse_right_release(int x, int y){
     auto rot_tmp = get_rot_tmp();
     orient = rot_tmp * orient;
     rotx = 0.f; roty = 0.f;
@@ -95,20 +112,20 @@ void Viewer::mouse_right_release(int x, int y){
     right_click = false;
 }
 //--------------------------------------------------------------------------------
-void Viewer::mouse_wheel_up(){
+void Viewer3D::mouse_wheel_up(){
     //нужно подумать
     //pos += glm::vec3(0.f,0.f,scale*0.1);
     scale *= 0.9;
     reshape(width,height);
 }
 //--------------------------------------------------------------------------------
-void Viewer::mouse_wheel_down(){
+void Viewer3D::mouse_wheel_down(){
     scale /=0.9;
     //pos -= glm::vec3(0.f,0.f,scale*0.1);
     reshape(width,height);
 }
 //--------------------------------------------------------------------------------
-void Viewer::drag(int x, int y){
+void Viewer3D::drag(int x, int y){
     if (left_click){
         float px = ((float)x)/min_size*2;
         float py = ((float)y)/min_size*2;
@@ -127,7 +144,7 @@ void Viewer::drag(int x, int y){
     }
     //glutPostRedisplay();
 }
-void Viewer::GL_init(){
+void Viewer3D::GL_init(){
     checkOpenGLerror();
     //printf("init begin\n");
     glewExperimental=GL_TRUE;
@@ -149,12 +166,12 @@ void Viewer::GL_init(){
 //--------------------------------------------------------------------------------
 //i==0,1,2 — min x,y,z
 //i=3,4,5 — max ,x,y,z
-void Viewer::clip_plane_move(float shift, int num){
+void Viewer3D::clip_plane_move(float shift, int num){
     if (num<3) min[num] += shift*scale;
     else max[num%3] += shift*scale;
 }
 //--------------------------------------------------------------------------------
-Viewer::Viewer() {
+Viewer3D::Viewer3D() {
     //wxGLContextAttrs cxtAttrs;
     //cxtAttrs.CoreProfile().OGLVersion(3, 3).EndList();
     rotx=0.0f; roty=0.0f;
@@ -169,30 +186,20 @@ Viewer::Viewer() {
     //orient =glm::quat(glm::vec3(0.,M_PI_2,-M_PI_2));
     //orient =glm::quat(glm::vec3(-M_PI_2,-M_PI_2,0.f)); // real order x z x
     orient =glm::quat(glm::vec3(-M_PI_2,-M_PI_2,0.f)); // real order x z x
-    ort = glm::ortho(-1,1,-1,1,1,-1); //z is also inverted by glm
+    proj = glm::ortho(-1,1,-1,1,1,-1); //z is also inverted by glm
     background = glm::vec3(1.f,1.f,1.f);
     axis_sw = false;
     //checkOpenGLerror();
 }
 //--------------------------------------------------------------------------------
-void Viewer::get_background(float &r, float &g, float &b){
-    r = background.x;
-    g = background.y;
-    b = background.z;
-}
-//--------------------------------------------------------------------------------
-void Viewer::set_background(float r, float g, float b){
-    background = glm::vec3(r, g, b);
-}
-//--------------------------------------------------------------------------------
-Viewer::~Viewer(){
+Viewer3D::~Viewer3D(){
     // there is nothing to clean;
 }
 //--------------------------------------------------------------------------------
-const glm::mat4 Viewer::calc_mvp(){
+const glm::mat4 Viewer3D::calc_mvp(){
     auto rot_tmp = get_rot_tmp();
     if (! axis_sw){
-        MVP = glm::translate(ort, glm::vec3(tr*scale,0.f))* glm::translate(glm::toMat4( rot_tmp * orient), -pos);
+        MVP = glm::translate(proj, glm::vec3(tr*scale,0.f))* glm::translate(glm::toMat4( rot_tmp * orient), -pos);
         Model  = glm::inverseTranspose(glm::translate(glm::mat4(1.0), glm::vec3(tr*scale,0.f))* glm::translate(glm::toMat4( rot_tmp * orient), -pos));
     } else {
         float m = (float)std::min(width, height);
@@ -201,51 +208,51 @@ const glm::mat4 Viewer::calc_mvp(){
     }
     return MVP;
 }
-const glm::mat4 Viewer::calc_itmvp() const{
+const glm::mat4 Viewer3D::calc_itmvp() const{
     if (!axis_sw){
         return glm::inverseTranspose(MVP);
     }
     else return glm::mat4(1.0);// it's an identity matrix if that is not clear
 }
 //--------------------------------------------------------------------------------
-void Viewer::set_view(float pitch, float yaw, float roll){
+void Viewer3D::set_view(float pitch, float yaw, float roll){
     orient = glm::quat(glm::vec3(pitch, yaw, roll))*glm::quat(glm::vec3(-M_PI_2,-M_PI_2,0.f));
 }
-void Viewer::get_view(float & pitch, float & yaw, float & roll) const{
+void Viewer3D::get_view(float & pitch, float & yaw, float & roll) const{
     const glm::vec3 view = glm::eulerAngles(orient*glm::inverse(glm::quat(glm::vec3(-M_PI_2,-M_PI_2,0.f))));
     pitch =view.x;
     yaw = view.y;
     roll = view.z;
 }
 //--------------------------------------------------------------------------------
-void Viewer::set_pos(float x, float y, float z){
+void Viewer3D::set_pos(float x, float y, float z){
     pos = glm::vec3(x,y,z);
 }
 ////--------------------------------------------------------------------------------
-void Viewer::get_pos(float* p){
+void Viewer3D::get_pos(float* p){
     p[0] = pos.x;
     p[1] = pos.y;
     p[2] = pos.z;
 }
-//void Viewer::set_xrange(float lower, float upper){
+//void Viewer3D::set_xrange(float lower, float upper){
 //    min[0] = lower; max[0]= upper;
 //}
 ////--------------------------------------------------------------------------------
-//void Viewer::set_yrange(float lower, float upper){
+//void Viewer3D::set_yrange(float lower, float upper){
 //    min[1] = lower; max[1]= upper;
 //}
 ////--------------------------------------------------------------------------------
-//void Viewer::set_zrange(float lower, float upper){
+//void Viewer3D::set_zrange(float lower, float upper){
 //    min[2] = lower; max[2]= upper;
 //}
 //--------------------------------------------------------------------------------
-void Viewer::display(){
+void Viewer3D::display(){
     glClearColor(background.r, background.g, background.b, 0.0f);
     glClearDepth(1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 //--------------------------------------------------------------------------------
-void Viewer::plot(ShaderProg * spr){
+void Viewer3D::plot(ShaderProg * spr){
     spr->AttachUniform(mvp_loc, "MVP");
     spr->AttachUniform(it_mvp_loc, "itMVP");
     spr->AttachUniform(model_loc, "Model");
@@ -283,21 +290,21 @@ void Viewer::plot(ShaderProg * spr){
 }
 
 //--------------------------------------------------------------------------------
-void Viewer::_reshape(int w, int h){
+void Viewer3D::_reshape(int w, int h){
     glViewport(0, 0, w, h);
     width = w; height = h;
     min_size = std::min(w, h);
     int l = min_size;
-    ort = glm::ortho(-w*scale/l, w*scale/l, -h*scale/l, h*scale/l,
+    proj = glm::ortho(-w*scale/l, w*scale/l, -h*scale/l, h*scale/l,
                     scale, -scale); //z is inverted by glm
 }
 //--------------------------------------------------------------------------------
-void Viewer::reshape(int w, int h){
+void Viewer3D::reshape(int w, int h){
     _reshape(w,h);
     //glutPostRedisplay();
 }
 //--------------------------------------------------------------------------------
-void Viewer::axis_switch(){
+void Viewer3D::axis_switch(){
     axis_sw = !axis_sw;
     int sf = axis_sw?10:1;
     glViewport(0, 0, width/sf, height/sf);
@@ -305,18 +312,15 @@ void Viewer::axis_switch(){
     else glDepthFunc(GL_GREATER);
 }
 //--------------------------------------------------------------------------------
-float Viewer::get_scale() const{
-    return scale;
-}
-glm::vec3 Viewer::get_vmin() const{
+glm::vec3 Viewer3D::get_vmin() const{
     if (axis_sw) return glm::vec3(-1.f,-1.f,-1.f);
     return min;
 }
-glm::vec3 Viewer::get_vmax() const{
+glm::vec3 Viewer3D::get_vmax() const{
     if (axis_sw) return glm::vec3(1.f,1.f,1.f);
     return max;
 }
-float Viewer::get_bounding_box(int i, bool mm) const{
+float Viewer3D::get_bounding_box(int i, bool mm) const{
     const glm::vec3 & getting = mm ? max: min;
     int j =0; float rej_value= getting.x;
     for(const float & c: {getting.x, getting.y, getting.z}){
@@ -326,7 +330,7 @@ float Viewer::get_bounding_box(int i, bool mm) const{
     }
     return rej_value;
 }
-void Viewer::set_bounding_box(int i, float v,  bool mm){
+void Viewer3D::set_bounding_box(int i, float v,  bool mm){
     glm::vec3 & changing = mm ? max: min;
     int j =0;
     for(float * c: {&changing.x, &changing.y, &changing.z}){
@@ -335,19 +339,15 @@ void Viewer::set_bounding_box(int i, float v,  bool mm){
     }
 }
 //--------------------------------------------------------------------------------
-void Viewer::set_scale(float sc){
-    scale = sc;
-}
-//--------------------------------------------------------------------------------
-//static std::string Viewer::read_string(){
+//static std::string Viewer3D::read_string(){
 //};
-std::string read_string(){
-    std::string input_command;
-    std::cin>>input_command;
-    return input_command;
-}
+//std::string read_string(){
+//    std::string input_command;
+//    std::cin>>input_command;
+//    return input_command;
+//}
 //--------------------------------------------------------------------------------
-void Viewer::automove(){
+void Viewer3D::automove(){
     glm::vec3 cent = (max + min)*0.5f;
     scale = glm::distance(cent, max);
     pos = cent;
@@ -355,6 +355,99 @@ void Viewer::automove(){
     //std::cout<<scale<<" "<<glm::to_string(pos)<<std::endl;
     _reshape(width, height);
 }
-////template void Viewer::autoscale<1>(Surface<1> * Sur);
-////template void Viewer::autoscale<2>(Surface<2> * Sur);
-//template void Viewer::autoscale<float>(SurfTemplate<float> * Sur);
+//--------------------------------------------------------------------------------
+//VIEWER2D
+//--------------------------------------------------------------------------------
+Viewer2D::Viewer2D() {
+    scale = 1.f;
+    pos = glm::vec2(0.f);
+    tr = glm::vec2(0.f); tr0 = glm::vec2(0.f);
+    min=glm::vec2(0.); max=glm::vec2(0.);
+    //left_click = false; right_click = false;
+    width = 900; height = 900;
+    proj = glm::ortho(-1,1,-1,1,1,-1); //z is also inverted by glm
+    background = glm::vec3(1.f,1.f,1.f);
+}
+//--------------------------------------------------------------------------------
+void Viewer2D::plot(ShaderProg * spr){
+    spr->AttachUniform(mproj_loc, "proj");
+    spr->AttachUniform(vmin, "vmin");
+    spr->AttachUniform(vmax, "vmax");
+    spr->AttachUniform(vport, "viewport");
+    spr->AttachUniform(unif_scale, "scale");
+    if (mproj_loc != -1){
+        glUniformMatrix4fv( mproj_loc, 1, GL_FALSE, glm::value_ptr(proj));
+    }
+    if (vmin != -1){
+        glUniform2f(vmin, min.x,min.y);
+    }
+    if (vmax != -1){
+        glUniform2f(vmax, max.x,max.y);
+    }
+    if (vport != -1){
+        glUniform2f(vport, width, height);
+    }
+    if (unif_scale != -1){
+        glUniform1f(unif_scale,scale);
+    }
+}
+//--------------------------------------------------------------------------------
+void Viewer2D::display(){
+    glClearColor(background.r, background.g, background.b, 0.0f);
+    glClearDepth(1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+//--------------------------------------------------------------------------------
+void Viewer2D::reshape(int w, int h){
+    glViewport(0, 0, w, h);
+    width = w; height = h;
+    min_size = std::min(w, h);
+    int l = min_size;
+    proj = glm::ortho(-w*scale/l, w*scale/l, -h*scale/l, h*scale/l,
+                    1.f, -1.f); //z is inverted by glm
+}
+//--------------------------------------------------------------------------------
+void Viewer2D::automove(){
+    glm::vec2 cent = (max + min)*0.5f;
+    scale = glm::distance(cent, max);
+    pos = cent;
+    if (scale == 0.f) scale = 1.f;
+    //std::cout<<scale<<" "<<glm::to_string(pos)<<std::endl;
+    reshape(width, height);
+}
+//--------------------------------------------------------------------------------
+void Viewer2D::set_pos(float x, float y){
+    pos = glm::vec2(x,y);
+}
+////--------------------------------------------------------------------------------
+void Viewer2D::get_pos(float* p){
+    p[0] = pos.x;
+    p[1] = pos.y;
+}
+//--------------------------------------------------------------------------------
+glm::vec2 Viewer2D::get_vmin() const{
+    return min;
+}
+//--------------------------------------------------------------------------------
+glm::vec2 Viewer2D::get_vmax() const{
+    return max;
+}
+//--------------------------------------------------------------------------------
+void Viewer2D::GL_init(){
+    checkOpenGLerror();
+    glewExperimental=GL_TRUE;
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+    glDepthRange(-1.,1.);
+    glShadeModel(GL_SMOOTH);
+    glewInit();
+    checkOpenGLerror();
+}
+//--------------------------------------------------------------------------------
+Viewer2D::~Viewer2D(){
+    // there is nothing to clean;
+}
+//--------------------------------------------------------------------------------
+////template void Viewer3D::autoscale<1>(Surface<1> * Sur);
+////template void Viewer3D::autoscale<2>(Surface<2> * Sur);
+//template void Viewer3D::autoscale<float>(SurfTemplate<float> * Sur);

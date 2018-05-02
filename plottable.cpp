@@ -207,3 +207,77 @@ void SurfTemplate::refill_select(){
     for(unsigned int i=0; i < select.size(); i++) select[i] = i;
 }
 //------------------------------------------------------------------------------
+// PaletteBox
+//------------------------------------------------------------------------------
+PaletteBox::PaletteBox(Texture & _tex, const glm::ivec2 _min, const glm::ivec2 _max):Plottable(),
+    tex(_tex), xymin(_min), xymax(_max), vertical(false){
+    VAO.add_buffer();
+    VAO.add_buffer();
+}
+//------------------------------------------------------------------------------
+void PaletteBox::load_on_device(){
+    const glm::vec3 tri[4] = {  glm::vec3(xymin.x,xymin.y,0), glm::vec3(xymax.x,xymin.y,0),
+	glm::vec3(xymin.x,xymax.y,0), glm::vec3(xymax.x,xymax.y,0)};
+
+    float ap_h[4] = {0.f,0.f,1.f,1.f};
+    float ap_v[4] = {0.f,1.f,0.f,1.f};
+    unsigned int indices[6] = {0,1, 2,1, 2,3};//Мы не можем сделать по-другому : цвет различается значит все индексы разные
+    VAO.load_data(POS, sizeof(glm::vec3) * 4, tri);
+    VAO.load_data(CLR, sizeof(float) * 4, vertical?ap_v:ap_h);
+    VAO.load_indices(6*sizeof(unsigned int), indices);
+    VAO.release();
+}
+//------------------------------------------------------------------------------
+void PaletteBox::AttachToShader(ShaderProg * spr) {
+    //glBindVertexArray(VAO);
+    VAO.bind();
+    spr->AttachUniform(unif_minmax,"minmaxmul");
+    //spr->AttachAttr(VAO.get_attr(NRM),"normal");
+    spr->AttachAttr(VAO.get_attr(CLR),"color");
+    spr->AttachAttr(VAO.get_attr(POS),"coord");
+    if (unif_minmax != -1) glUniform3f(unif_minmax, 0.f, 1.f, 1.0f);
+    VAO.enable_attr(POS, 3, GL_FLOAT);
+    VAO.enable_attr(CLR, 1, GL_FLOAT);
+    VAO.release();
+}
+//------------------------------------------------------------------------------
+void PaletteBox::plot(ShaderProg * spr) {
+    //int Ntr = 3;
+    AttachToShader(spr);
+    this->tex.use_texture(spr, "pal");
+    //glBindVertexArray(VAO);
+    VAO.bind();
+    //glDrawElements(GL_LINES,Ntr*2, GL_UNSIGNED_INT, (void *)0);
+    glDrawElementsInstanced(GL_TRIANGLES,6, GL_UNSIGNED_INT, (void *)0,1);
+    //glBindVertexArray(0);
+    VAO.release();
+    //glDisableVertexAttribArray(vattr);
+    //glDisableVertexAttribArray(cattr);
+    //glDisableVertexAttribArray(nattr);
+    //glBindBuffer(GL_ARRAY_BUFFER,0);
+}
+//------------------------------------------------------------------------------
+bool PaletteBox::get_vertical(){
+    return vertical;
+}
+//------------------------------------------------------------------------------
+void PaletteBox::set_vertical(bool new_vert){
+    vertical = new_vert;
+}
+//------------------------------------------------------------------------------
+void PaletteBox::switch_vertical(){
+    vertical ^=1;
+}
+//------------------------------------------------------------------------------
+void PaletteBox::set_xyminmax(const int * newxymin, const int* newxymax){
+    xymin = glm::ivec2(newxymin[0], newxymin[1]);
+    xymax = glm::ivec2(newxymax[0], newxymax[1]);
+}
+//------------------------------------------------------------------------------
+void PaletteBox::get_xyminmax(int * newxymin, int* newxymax){
+    newxymin[0] = xymin.x;
+    newxymin[1] = xymin.y;
+    newxymax[0] = xymax.x;
+    newxymax[1] = xymax.y;
+}
+//------------------------------------------------------------------------------

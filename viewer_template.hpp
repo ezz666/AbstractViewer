@@ -44,25 +44,52 @@ struct vertex{
     GLfloat x,y,z;
 };
 //--------------------------------------------------------------------------------
-//VIEWER
+//VIEWER_ABSTRACT
 //--------------------------------------------------------------------------------
 class Viewer {
+    protected:
+        int width, height, min_size;
+        glm::vec3 background;
+        glm::vec2 tr, tr0;
+        glm::mat4 proj;
+        float scale;
+        GLint vmin, vmax, vport, unif_scale;
+    public:
+        virtual ~Viewer(){}
+        virtual void plot(ShaderProg * spr)= 0;
+        virtual void display(void)=0;
+        virtual void reshape(int w, int h)=0;
+        virtual void GL_init()=0;
+        virtual void automove()=0;
+        int get_width() const {return width;}
+        int get_height() const {return height;}
+        float get_scale() const;
+        void set_scale(float sc);
+        void get_background(float & r, float & g, float & b);
+        void set_background(float r, float g, float b);
+        void drag(int x,int y){}
+        void mouse_left_click(int x, int y){}
+        void mouse_left_release(int x, int y){}
+        void mouse_right_click(int x, int y){}
+        void mouse_right_release(int x, int y){}
+        void mouse_wheel_up(){}
+        void mouse_wheel_down(){}
+};
+//--------------------------------------------------------------------------------
+//VIEWER3D
+//--------------------------------------------------------------------------------
+class Viewer3D: public Viewer {
     private:
         float rotx, roty;
         float  ox, oy;
-        float scale;
-        int width, height, min_size;
-        int Ntr;
-        glm::vec2 tr, tr0;
-            glm::vec3 pos, min, max;
+        glm::vec3 pos, min, max;
         bool left_click, right_click, wire, axis_sw;
         //GLint vattr, nattr, cattr, mvp_loc,
         //      unif_minmax;
         glm::quat orient;
-        glm::mat4 MVP,Model,ort;
+        glm::mat4 MVP,Model;
         //std::future<std::string> command_fut;
-        GLint mvp_loc, model_loc, it_mvp_loc, vmin, vmax, vport, unif_scale;
-        glm::vec3 background;
+        GLint mvp_loc, model_loc, it_mvp_loc;
         void _reshape(int w, int h);
         //std::string com;
 //#ifndef PYTHON
@@ -74,24 +101,18 @@ class Viewer {
     public:
         //ShaderProg * spr;
         //void rescale(float mult);
-        Viewer();
-        ~Viewer();
+        Viewer3D();
+        ~Viewer3D();
         //--------------------------------------------------------------------------------
         // functions for user
-        void get_background(float & r, float & g, float & b);
-        void set_background(float r, float g, float b);
-        float get_scale() const;
         void axis_switch();
         void get_pos(float* p);
         glm::vec3 get_vmin() const;
         glm::vec3 get_vmax() const;
-        int get_width() const {return width;}
-        int get_height() const {return height;}
         bool get_wire() const {return wire;}
         void set_view(float pitch, float yaw, float roll);
         void get_view(float & pitch, float & yaw, float & roll)const;
         void set_pos(float x, float y, float z);
-        void set_scale(float sc);
         void set_wire(bool tf);
         float get_bounding_box(int i, bool mm)const;
         void set_bounding_box(int i, float v ,bool mm);
@@ -128,5 +149,26 @@ class Viewer {
         //void shader_init();
         void GL_init();
 
+};
+//--------------------------------------------------------------------------------
+//VIEWER2D
+//--------------------------------------------------------------------------------
+class Viewer2D: public Viewer {
+    private:
+        glm::vec2 pos, min, max;
+        GLint mproj_loc;
+    public:
+        Viewer2D();
+        ~Viewer2D();
+        //--------------------------------------------------------------------------------
+        void plot(ShaderProg * spr);
+        void display(void);
+        void reshape(int w, int h);
+        void automove();
+        void set_pos(float x, float y);
+        void get_pos(float* p);
+        glm::vec2 get_vmin() const;
+        glm::vec2 get_vmax() const;
+        void GL_init();
 };
 #endif //VIEWER_TEMPLATE

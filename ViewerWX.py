@@ -32,7 +32,7 @@ class ViewerWX(UniversalViewer, wx.App):
         #    glarglist[i] = v
         frame.Show(True)
         frame.SetFocus()
-        self.V = SceneWX(frame)#, glarglist)
+        self.V = Scene3DWX(frame)#, glarglist)
         self.V.SetFocus()
         self.frame = frame
         self.SetTopWindow(frame)

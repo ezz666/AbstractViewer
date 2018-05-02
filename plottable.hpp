@@ -3,8 +3,8 @@
 
 #define IND 3
 #define POS 0
-#define NRM 1
-#define CLR 2
+#define CLR 1
+#define NRM 2
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtx/normal.hpp>
@@ -12,6 +12,7 @@
 #include <iostream>
 #include "shaderprog.hpp"
 class ShaderProg;
+class Texture;
 //--------------------------------------------------------------------------------
 // Vertex array object (VAO)
 //--------------------------------------------------------------------------------
@@ -48,8 +49,8 @@ class Plottable{
 //------------------------------------------------------------------------------
 class Axis: public Plottable{
     GLint unif_minmax;
-    ~Axis(){};
     public:
+    ~Axis(){};
     Axis():Plottable(){
         VAO.add_buffer();
         VAO.add_buffer();
@@ -91,6 +92,23 @@ class SurfTemplate: public Plottable {
         //------------------------------------------------------------------------------
         virtual void attach_shader(ShaderProg * spr)=0;
         //------------------------------------------------------------------------------
+};
+//------------------------------------------------------------------------------
+class PaletteBox: public Plottable{
+    Texture & tex;
+    glm::ivec2 xymin, xymax;
+    bool vertical;
+    GLint unif_minmax;
+    public:
+    PaletteBox(Texture & _tex, const glm::ivec2 _min = glm::ivec2(0), const glm::ivec2 _max = glm::ivec2(0));
+    void load_on_device();
+    bool get_vertical();
+    void switch_vertical();
+    void set_vertical(bool new_vert);
+    void AttachToShader(ShaderProg * spr);
+    void plot(ShaderProg * spr);
+    void set_xyminmax(const int * newxymin, const int * newxymax);
+    void get_xyminmax(int * newxymin, int * newxymax);
 };
 //------------------------------------------------------------------------------
 #endif //PLOTTABLE
