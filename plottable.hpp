@@ -95,14 +95,15 @@ class SurfTemplate: public Plottable {
 };
 //------------------------------------------------------------------------------
 class PaletteBox: public Plottable{
-    Texture & tex;
+    Texture * tex;
     glm::ivec2 xymin, xymax;
     bool vertical;
     GLint unif_minmax;
     public:
-    PaletteBox(Texture & _tex, const glm::ivec2 _min = glm::ivec2(0), const glm::ivec2 _max = glm::ivec2(0));
+    PaletteBox(Texture * _tex = nullptr, const glm::ivec2 _min = glm::ivec2(0), const glm::ivec2 _max = glm::ivec2(0));
     void load_on_device();
     bool get_vertical();
+    void set_texture(Texture * tex);
     void switch_vertical();
     void set_vertical(bool new_vert);
     void AttachToShader(ShaderProg * spr);

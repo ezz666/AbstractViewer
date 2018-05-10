@@ -209,7 +209,7 @@ void SurfTemplate::refill_select(){
 //------------------------------------------------------------------------------
 // PaletteBox
 //------------------------------------------------------------------------------
-PaletteBox::PaletteBox(Texture & _tex, const glm::ivec2 _min, const glm::ivec2 _max):Plottable(),
+PaletteBox::PaletteBox(Texture * _tex, const glm::ivec2 _min, const glm::ivec2 _max):Plottable(),
     tex(_tex), xymin(_min), xymax(_max), vertical(false){
     VAO.add_buffer();
     VAO.add_buffer();
@@ -241,10 +241,14 @@ void PaletteBox::AttachToShader(ShaderProg * spr) {
     VAO.release();
 }
 //------------------------------------------------------------------------------
+void PaletteBox::set_texture(Texture * _tex) {
+    this->tex = _tex;
+}
+//------------------------------------------------------------------------------
 void PaletteBox::plot(ShaderProg * spr) {
     //int Ntr = 3;
     AttachToShader(spr);
-    this->tex.use_texture(spr, "pal");
+    this->tex->use_texture(spr, "pal");
     //glBindVertexArray(VAO);
     VAO.bind();
     //glDrawElements(GL_LINES,Ntr*2, GL_UNSIGNED_INT, (void *)0);

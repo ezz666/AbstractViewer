@@ -11,15 +11,23 @@ KeycodeToKeyname ={
         wx.WXK_DOWN:"DOWN", wx.WXK_PAGEUP:"PAGE_UP", wx.WXK_PAGEDOWN:"PAGE_DOWN",
         wx.WXK_HOME:"HOME", wx.WXK_END:"END", wx.WXK_INSERT:"INSERT"
         }
+class FrameWX(wx.Frame):
+    def __init__(self):
+        wx.Frame.__init__(self,None, -1, "RunDemo: ",size=(-1,-1),  pos=(0,0),
+                        style=wx.DEFAULT_FRAME_STYLE, name="run a sample")
+        self.layout = wx.StaticBoxSizer(wx.StaticBox(self),wx.VERTICAL)
+        self.SetSizerAndFit(self.layout)
+    def add(self, wdg, size = 1, proportion= 1):
+        self.layout.Add(wdg, proportion, wx.EXPAND|wx.ALL, size)
+
 class ViewerWX(UniversalViewer, wx.App):
     def __init__(self, argv):
         wx.App.__init__(self, redirect=False)
         self.ExitOnFrameDelete=True
         #self.argv= argv
     def OnInit(self):
-        frame = wx.Frame(None, -1, "RunDemo: ",size=(-1,-1),  pos=(0,0),
-                        style=wx.DEFAULT_FRAME_STYLE, name="run a sample")
         #frame.CreateStatusBar()
+        frame = FrameWX()
 
 
 
@@ -32,13 +40,20 @@ class ViewerWX(UniversalViewer, wx.App):
         #    glarglist[i] = v
         frame.Show(True)
         frame.SetFocus()
+        #self.cbox = Scene2DWX(frame)
+        #self.cbox.GL_init()
         self.V = Scene3DWX(frame)#, glarglist)
         self.V.SetFocus()
         self.frame = frame
+        frame.add(self.V, size = 1, proportion = 10)
         self.SetTopWindow(frame)
-        self.AbstractInit()
         #self.Bind()
         return True
+    def add_pal(self, name, pal_list):
+        '''Добавляет палитру с именем name и цветами заданными в виде списка float со значениями от 0 до 1,
+        они групируются по 3 формируя цвета, длина округляется до ближайшей снизу кратной 3'''
+        self.V.SetCurrent(self.V.context)
+        UniversalViewer.add_pal(self, name, pal_list)
     def WakeUp(self):
         wx.WakeUpIdle()
     def OnPaint(self, event):
@@ -46,6 +61,7 @@ class ViewerWX(UniversalViewer, wx.App):
     def Draw(self):
         self.V.SetCurrent(self.V.context)
         self.display()
+        #self.cbox.SetCurrent(self.cbox.context)
         #print("DRAW")
     def Bind(self):
         self.V.Bind(wx.EVT_PAINT, self.OnPaint)
@@ -152,4 +168,81 @@ class ViewerWX(UniversalViewer, wx.App):
         if evt.Dragging():
             self.V.drag(*self.OnMouseDown(evt))
             self.V.update()
+
+class PaletteWidget(Scene2DWX):
+    def __init__(self, parent):
+        Scene2DWX.__init__(self,parent)
+        self.GL_init()
+        self.cbox = PaletteBox()
+        self.spr = Shader()
+        path_to_AV = os.path.dirname(__file__)
+        self.shader_extern_load(*map(lambda x : os.path.join(path_to_AV,x), ["2dv.shader","2df.shader"]) )
+        checkOpenGLerror()
+        self.palettes = {}
+        #self.add_pal("pal", [1.,0.,0., 1.,.5,0., 1.,1.,0., 0.,1.,0., 0.,1.,1., 0.,0.,1., 1.,0.,1.])
+        #self.add_pal("rgb", [1.,0.,0.,0.,1.,0.,0.,0.,1.])
+    def shader_extern_load(self, vertex_string, fragment_string):
+        "Загружает шейдеры из файлов"
+        self.spr.extern_load(vertex_string, fragment_string)
+    def shader_load(self, vertex_string, fragment_string):
+        "Загружает шейдеры из строк"
+        self.spr.load(vertex_string, fragment_string)
+    def add_pal(self, name, pal_list):
+        '''Добавляет палитру с именем name и цветами заданными в виде списка float со значениями от 0 до 1,
+        они групируются по 3 формируя цвета, длина округляется до ближайшей снизу кратной 3'''
+        self.SetCurrent(self.context)
+        truncate3 = lambda x: x - x%3
+        nlen = truncate3(len(pal_list))
+        pal = float_array(nlen)
+        for i, v in enumerate(pal_list[:nlen]): pal[i] = v
+        self.palettes[name] = Texture(pal, int(nlen/3))
+    def set_pal(self, pal_name):
+        "Устанавливает палитру"
+        self.tex = self.palettes[pal_name]
+        self.cur_pal = pal_name
+        self.cbox.set_texture( self.palettes[self.cur_pal] )
+        self.update()
+    def plot(self):
+        self.SetCurrent(self.context)
+        self.cbox._load_on_device = self.cbox.load_on_device
+        def myload():
+            self.cbox._load_on_device()
+            self.update()
+        self.cbox.load_on_device = myload
+        self.cbox.load_on_device()
+    def display(self):
+        self.V.display()
+        self.spr.start()
+        self.tex.use_texture(self.spr,"pal")
+        self.V.plot(self.spr)
+        #self.V.plot(self.spr)
+        self.cbox.plot(self.spr)
+        self.spr.stop()
+    def Draw(self):
+        self.SetCurrent(self.context)
+        self.display()
+    def OnSize(self,evt):
+        self.reshape()
+    def OnPaint(self, event):
+        self.reshape()
+        self.Draw()
+    def BindAll(self):
+        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        self.Bind(wx.EVT_SIZE, self.OnSize)
+        #self.V.Bind(wx.EVT_LEFT_DOWN, self.OnLeftDown)
+        #self.V.Bind(wx.EVT_LEFT_UP, self.OnLeftUp)
+        #self.V.Bind(wx.EVT_RIGHT_DOWN, self.OnRightDown)
+        #self.V.Bind(wx.EVT_RIGHT_UP, self.OnRightUp)
+        #self.V.Bind(wx.EVT_MOTION, self.OnMouseMotion)
+        #self.V.Bind(wx.EVT_MOTION, self.OnMouseMotion)
+        #self.V.Bind(wx.EVT_MOUSEWHEEL, self.OnWheelRotate)
+        #self.KeyDownHandler = self.get_key_function(self.KeyDown)
+        #self.KeyUpHandler = self.get_key_function(self.KeyUp)
+        #self.SpecialKeyDownHandler = self.get_key_function(self.SpecialKeyDown)
+        #self.SpecialKeyUpHandler = self.get_key_function(self.SpecialKeyUp)
+        #self.V.Bind(wx.EVT_CHAR, self.OnKeyDown)
+        #self.V.Bind(wx.EVT_KEY_DOWN,self.OnKeyDown)
+        #print(self.SpecialKeyDown)
+        #self.V.Bind(wx.EVT_KEY_UP,self.OnKeyUp)
+
 

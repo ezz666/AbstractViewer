@@ -9,3 +9,4 @@ Axis = viewer.Axis
 Texture = viewer.Texture
 FrameBuffer = viewer.FrameBuffer
 Shader = viewer.ShaderProg
+PaletteBox = viewer.PaletteBox
