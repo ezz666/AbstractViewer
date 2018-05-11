@@ -13,11 +13,11 @@ KeycodeToKeyname ={
         }
 class FrameWX(wx.Frame):
     def __init__(self):
-        wx.Frame.__init__(self,None, -1, "RunDemo: ",size=(-1,-1),  pos=(0,0),
-                        style=wx.DEFAULT_FRAME_STYLE, name="run a sample")
-        self.layout = wx.StaticBoxSizer(wx.StaticBox(self),wx.VERTICAL)
+        wx.Frame.__init__(self,None, -1, "RunDemo: ",size = (900,900),
+                        name="run a sample")
+        self.layout = wx.BoxSizer(wx.VERTICAL)
         self.SetSizerAndFit(self.layout)
-    def add(self, wdg, size = 1, proportion= 1):
+    def add(self, wdg, size = 0, proportion= 1):
         self.layout.Add(wdg, proportion, wx.EXPAND|wx.ALL, size)
 
 class ViewerWX(UniversalViewer, wx.App):
@@ -45,21 +45,21 @@ class ViewerWX(UniversalViewer, wx.App):
         self.V = Scene3DWX(frame)#, glarglist)
         self.V.SetFocus()
         self.frame = frame
-        frame.add(self.V, size = 1, proportion = 10)
+        frame.add(self.V, 0, 30)
         self.SetTopWindow(frame)
         #self.Bind()
         return True
     def add_pal(self, name, pal_list):
         '''Добавляет палитру с именем name и цветами заданными в виде списка float со значениями от 0 до 1,
         они групируются по 3 формируя цвета, длина округляется до ближайшей снизу кратной 3'''
-        self.V.SetCurrent(self.V.context)
+        self.V.MakeCurrent()
         UniversalViewer.add_pal(self, name, pal_list)
     def WakeUp(self):
         wx.WakeUpIdle()
     def OnPaint(self, event):
         self.Draw()
     def Draw(self):
-        self.V.SetCurrent(self.V.context)
+        self.V.MakeCurrent()
         self.display()
         #self.cbox.SetCurrent(self.cbox.context)
         #print("DRAW")
@@ -83,9 +83,9 @@ class ViewerWX(UniversalViewer, wx.App):
         self.V.Bind(wx.EVT_KEY_DOWN,self.OnKeyDown)
         #print(self.SpecialKeyDown)
         self.V.Bind(wx.EVT_KEY_UP,self.OnKeyUp)
-        self.frame.Bind(wx.EVT_IDLE, self.OnIdle)
+        self.V.Bind(wx.EVT_IDLE, self.OnIdle)
         self.timer = wx.Timer(self)
-        self.frame.Bind(wx.EVT_TIMER, self.OnTimer)
+        self.V.Bind(wx.EVT_TIMER, self.OnTimer)
         self.timer.Start(42)
     def exit(self):
         "Закрывает окно и завершает програму"
@@ -111,6 +111,7 @@ class ViewerWX(UniversalViewer, wx.App):
         #event.Skip()
     def OnIdle(self, event):
         self.idle()
+        self.V.SetFocus()
     def OnKey(self,evt):
         k = evt.GetUnicodeKey()
         sp_key=(k==0)
@@ -129,7 +130,7 @@ class ViewerWX(UniversalViewer, wx.App):
         #print(k,mod,spec,"DOWN")
         if spec: self.SpecialKeyDownHandler(k,x,y,mod)
         else: self.KeyDownHandler(k,x,y,mod)
-        evt.Skip()
+        #evt.Skip()
     def OnKeyUp(self,evt):
         k,x,y,mod, spec = self.OnKey(evt)
         #print(k,mod,spec,"UP")
@@ -144,13 +145,16 @@ class ViewerWX(UniversalViewer, wx.App):
         return evt.GetPosition()
     def OnLeftDown(self, evt):
         self.V.mouse_left_click(*self.OnMouseDown(evt))
+        self.bb_auto = False
     def OnLeftUp(self, evt):
         self.V.mouse_left_release(*self.OnMouseDown(evt))
+        self.bb_auto = False
     def OnRightDown(self, evt):
         self.V.mouse_right_click(*self.OnMouseDown(evt))
     def OnRightUp(self, evt):
         self.V.mouse_right_release(*self.OnMouseDown(evt))
     def OnWheelRotate(self,evt):
+        self.bb_auto = False
         rot = evt.WheelRotation
         delta = evt.WheelDelta
         #print("WHEEL", int(abs(rot)/delta))
@@ -171,6 +175,7 @@ class ViewerWX(UniversalViewer, wx.App):
 
 class PaletteWidget(Scene2DWX):
     def __init__(self, parent):
+        self.parent = parent
         Scene2DWX.__init__(self,parent)
         self.GL_init()
         self.cbox = PaletteBox()
@@ -190,7 +195,7 @@ class PaletteWidget(Scene2DWX):
     def add_pal(self, name, pal_list):
         '''Добавляет палитру с именем name и цветами заданными в виде списка float со значениями от 0 до 1,
         они групируются по 3 формируя цвета, длина округляется до ближайшей снизу кратной 3'''
-        self.SetCurrent(self.context)
+        self.MakeCurrent()
         truncate3 = lambda x: x - x%3
         nlen = truncate3(len(pal_list))
         pal = float_array(nlen)
@@ -203,7 +208,7 @@ class PaletteWidget(Scene2DWX):
         self.cbox.set_texture( self.palettes[self.cur_pal] )
         self.update()
     def plot(self):
-        self.SetCurrent(self.context)
+        self.MakeCurrent()
         self.cbox._load_on_device = self.cbox.load_on_device
         def myload():
             self.cbox._load_on_device()
@@ -218,12 +223,18 @@ class PaletteWidget(Scene2DWX):
         #self.V.plot(self.spr)
         self.cbox.plot(self.spr)
         self.spr.stop()
+        self.SwapBuffers()
     def Draw(self):
-        self.SetCurrent(self.context)
+        self.MakeCurrent()
+        self.automove()
         self.display()
     def OnSize(self,evt):
+        self.MakeCurrent()
         self.reshape()
+        self.automove()
+        self.update()
     def OnPaint(self, event):
+        self.MakeCurrent()
         self.reshape()
         self.Draw()
     def BindAll(self):

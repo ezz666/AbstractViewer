@@ -210,22 +210,24 @@ void SurfTemplate::refill_select(){
 // PaletteBox
 //------------------------------------------------------------------------------
 PaletteBox::PaletteBox(Texture * _tex, const glm::ivec2 _min, const glm::ivec2 _max):Plottable(),
-    tex(_tex), xymin(_min), xymax(_max), vertical(false){
+    tex(_tex), xymin(_min), xymax(_max), vertical(false), unif_minmax(-1){
     VAO.add_buffer();
     VAO.add_buffer();
+    checkOpenGLerror();
 }
 //------------------------------------------------------------------------------
 void PaletteBox::load_on_device(){
     const glm::vec3 tri[4] = {  glm::vec3(xymin.x,xymin.y,0), glm::vec3(xymax.x,xymin.y,0),
 	glm::vec3(xymin.x,xymax.y,0), glm::vec3(xymax.x,xymax.y,0)};
 
-    float ap_h[4] = {0.f,0.f,1.f,1.f};
-    float ap_v[4] = {0.f,1.f,0.f,1.f};
+    float ap_v[4] = {0.f,0.f,1.f,1.f};
+    float ap_h[4] = {0.f,1.f,0.f,1.f};
     unsigned int indices[6] = {0,1, 2,1, 2,3};//Мы не можем сделать по-другому : цвет различается значит все индексы разные
     VAO.load_data(POS, sizeof(glm::vec3) * 4, tri);
     VAO.load_data(CLR, sizeof(float) * 4, vertical?ap_v:ap_h);
     VAO.load_indices(6*sizeof(unsigned int), indices);
     VAO.release();
+    checkOpenGLerror();
 }
 //------------------------------------------------------------------------------
 void PaletteBox::AttachToShader(ShaderProg * spr) {
@@ -239,6 +241,7 @@ void PaletteBox::AttachToShader(ShaderProg * spr) {
     VAO.enable_attr(POS, 3, GL_FLOAT);
     VAO.enable_attr(CLR, 1, GL_FLOAT);
     VAO.release();
+    checkOpenGLerror();
 }
 //------------------------------------------------------------------------------
 void PaletteBox::set_texture(Texture * _tex) {
@@ -255,6 +258,7 @@ void PaletteBox::plot(ShaderProg * spr) {
     glDrawElementsInstanced(GL_TRIANGLES,6, GL_UNSIGNED_INT, (void *)0,1);
     //glBindVertexArray(0);
     VAO.release();
+    checkOpenGLerror();
     //glDisableVertexAttribArray(vattr);
     //glDisableVertexAttribArray(cattr);
     //glDisableVertexAttribArray(nattr);

@@ -390,20 +390,22 @@ void Viewer2D::plot(ShaderProg * spr){
     if (unif_scale != -1){
         glUniform1f(unif_scale,scale);
     }
+    checkOpenGLerror();
 }
 //--------------------------------------------------------------------------------
 void Viewer2D::display(){
     glClearColor(background.r, background.g, background.b, 0.0f);
     glClearDepth(1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    checkOpenGLerror();
 }
 //--------------------------------------------------------------------------------
 void Viewer2D::reshape(int w, int h){
     glViewport(0, 0, w, h);
     width = w; height = h;
     min_size = std::min(w, h);
-    int l = min_size;
-    proj = glm::ortho(-w*scale/l, w*scale/l, -h*scale/l, h*scale/l,
+    float l = min_size;
+    proj = glm::ortho(-scale, scale, -scale, scale,
                     1.f, -1.f); //z is inverted by glm
 }
 //--------------------------------------------------------------------------------
@@ -436,9 +438,9 @@ glm::vec2 Viewer2D::get_vmax() const{
 void Viewer2D::GL_init(){
     checkOpenGLerror();
     glewExperimental=GL_TRUE;
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
-    glDepthRange(-1.,1.);
+    //glEnable(GL_DEPTH_TEST);
+    //glDepthFunc(GL_LEQUAL);
+    //glDepthRange(-1.,1.);
     glShadeModel(GL_SMOOTH);
     glewInit();
     checkOpenGLerror();

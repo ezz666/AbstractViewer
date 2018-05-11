@@ -100,7 +100,7 @@ class PaletteBox: public Plottable{
     bool vertical;
     GLint unif_minmax;
     public:
-    PaletteBox(Texture * _tex = nullptr, const glm::ivec2 _min = glm::ivec2(0), const glm::ivec2 _max = glm::ivec2(0));
+    PaletteBox(Texture * _tex = nullptr, const glm::ivec2 _min = glm::ivec2(-1), const glm::ivec2 _max = glm::ivec2(1));
     void load_on_device();
     bool get_vertical();
     void set_texture(Texture * tex);
