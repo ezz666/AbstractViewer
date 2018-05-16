@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.1.0)
 set(CMAKE_CXX_STANDARD 11)
 project(AbstractViewer)
 
+if (CMAKE_VERSION VERSION_GREATER "3.11")
+  cmake_policy(SET CMP0072 NEW)
+endif(CMAKE_VERSION VERSION_GREATER "3.11")
+
 option(PY3 "Create Python3 bindings instead of Python2" ON)
 find_package (SWIG REQUIRED)
 include(${SWIG_USE_FILE})
