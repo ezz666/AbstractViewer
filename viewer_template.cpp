@@ -404,7 +404,7 @@ void Viewer2D::reshape(int w, int h){
     glViewport(0, 0, w, h);
     width = w; height = h;
     min_size = std::min(w, h);
-    float l = min_size;
+    //float l = min_size;
     proj = glm::ortho(-scale, scale, -scale, scale,
                     1.f, -1.f); //z is inverted by glm
 }
