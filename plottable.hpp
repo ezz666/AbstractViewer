@@ -141,9 +141,9 @@ class VolumeTemplate: public Plottable {
     //------------------------------------------------------------------------------
     void adjust_cube(const Viewer3D & V);
     //------------------------------------------------------------------------------
-    virtual void get_origin(float & x, float & y, float & z) = 0;
-    virtual void get_sizes(float & x, float & y, float & z) = 0;
-    virtual void get_steps(float & x, float & y, float & z) = 0;
+    virtual void get_origin(float & x, float & y, float & z) const = 0;
+    virtual void get_sizes(float & x, float & y, float & z) const = 0;
+    virtual void get_steps(float & x, float & y, float & z) const = 0;
     virtual void autoset_minmax() = 0;
     virtual void reload_texture() = 0;
     virtual void bbox(float * bmin, float * bmax) const = 0;
