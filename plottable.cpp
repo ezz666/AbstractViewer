@@ -384,7 +384,8 @@ void VolumeTemplate::attach_shader(ShaderProg * spr){
   spr->AttachAttr(this->VAO.get_attr(POS),"coord");
   //auto size = get_sizes();
   //auto steps = get_steps();
-  float size[3], steps[3];
+  float steps[3];
+  int size[3];
   get_steps(steps[0], steps[1], steps[2]);
   float rstep[3] {1.f/steps[0], 1.f/steps[1], 1.f/steps[2]};
   get_sizes(size[0], size[1], size[2]);

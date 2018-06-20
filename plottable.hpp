@@ -124,7 +124,6 @@ class VolumeTemplate: public Plottable {
     int get_ftype();
     float get_ranges(int i);
     void get_auto_box(float * bb_min, float * bb_max);
-    void attach_shader(ShaderProg * spr);
     void plot(ShaderProg * spr);
     void load_on_device();
     void reload_cube();
@@ -141,8 +140,9 @@ class VolumeTemplate: public Plottable {
     //------------------------------------------------------------------------------
     void adjust_cube(const Viewer3D & V);
     //------------------------------------------------------------------------------
+    virtual void attach_shader(ShaderProg * spr);
     virtual void get_origin(float & x, float & y, float & z) const = 0;
-    virtual void get_sizes(float & x, float & y, float & z) const = 0;
+    virtual void get_sizes(int & x, int & y, int & z) const = 0;
     virtual void get_steps(float & x, float & y, float & z) const = 0;
     virtual void autoset_minmax() = 0;
     virtual void reload_texture() = 0;
