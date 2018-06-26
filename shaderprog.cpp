@@ -284,10 +284,14 @@ void Texture3D::load(const float* pal,  int _xsz, int _ysz, int _zsz, int intern
    tex_len=xsz*ysz*zsz;
    glActiveTexture(TexTarget);
    glBindTexture(GL_TEXTURE_3D, textureID);
+   //printf("bind texture after activating\n");
+   checkOpenGLerror();
    glBindSampler(TexTarget-GL_TEXTURE0, samplerID);
+   //printf("bind sampler\n");
+   checkOpenGLerror();
    if (tex_len>0){
       glBindTexture(GL_TEXTURE_3D, textureID);
-      //printf("bind tex sampl\n");
+      //printf("bind texture\n");
       checkOpenGLerror();
       //printf("pre load tex\n");
       glTexImage3D(GL_TEXTURE_3D, 0, internal_format, xsz, ysz, zsz, 0, format, GL_FLOAT, pal);
