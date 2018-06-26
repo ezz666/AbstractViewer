@@ -15,11 +15,18 @@ class Texture{
         GLint tex_loc;
         GLenum TexTarget;
         int tex_len;
+        std::unique_ptr<float []> data;
     public:
+# ifndef SWIG
+        const float & operator [](int i) const;
+        float & operator [](int i);
+# endif // SWIG
         Texture():tex_loc(-1),TexTarget(GL_TEXTURE0){};
         Texture(GLenum _TexTarget):TexTarget(_TexTarget){};
-        Texture(const float * pal, int length, GLenum _TexTarget=GL_TEXTURE0);
-        void load(const float* pal, int length);
+        Texture(const float * pal, int length, GLenum _TexTarget=GL_TEXTURE0, GLenum format = GL_RGB);
+        void load(const float* pal, int length, GLenum format = GL_RGB);
+        void set_alpha(int color_num, float new_alpha);
+        void reload();
         ~Texture();
         int get_length();
 

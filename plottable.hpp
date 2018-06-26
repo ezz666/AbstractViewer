@@ -150,6 +150,7 @@ class VolumeTemplate: public Plottable {
 };
 //------------------------------------------------------------------------------
 class PaletteBox: public Plottable{
+    protected:
     Texture * tex;
     glm::ivec2 xymin, xymax;
     bool vertical;
@@ -165,6 +166,17 @@ class PaletteBox: public Plottable{
     void plot(ShaderProg * spr);
     void set_xyminmax(const int * newxymin, const int * newxymax);
     void get_xyminmax(int * newxymin, int * newxymax);
+};
+//------------------------------------------------------------------------------
+class PaletteAlphaControl: public PaletteBox {
+    protected:
+        std::unique_ptr<glm::vec3[]> line;
+        VertexArray lineVAO;
+    public: 
+        PaletteAlphaControl(Texture * _tex = nullptr, const glm::ivec2 _min = glm::ivec2(-1), const glm::ivec2 _max = glm::ivec2(1));
+        void set_alpha(int color_num, float new_alpha);
+        void load_on_device();
+        void plot(ShaderProg * spr);
 };
 //------------------------------------------------------------------------------
 #endif //PLOTTABLE

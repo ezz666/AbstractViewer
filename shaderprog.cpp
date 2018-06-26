@@ -192,32 +192,59 @@ void ShaderProg::stop(){
 //--------------------------------------------------------------------------------
 //TEXTURES
 //--------------------------------------------------------------------------------
-Texture::Texture(const float* pal, int length, GLenum _TexTarget):TexTarget(_TexTarget){
+Texture::Texture(const float* pal, int length, GLenum _TexTarget, GLenum format):TexTarget(_TexTarget){
    tex_len = length;
    glGenTextures(1, &textureID);
    glGenSamplers(1, &samplerID);
    //glBindSampler(GL_TEXTURE0, samplerID);
    linear();
    checkOpenGLerror();
-   load(pal, length);
+   load(pal, length, format);
 }
-void Texture::load(const float* pal,  int length){
+void Texture::load(const float* pal,  int length, GLenum format){
    tex_len=length;
+   data.reset( new float [4*length]);
+   if (format == GL_RGBA)
+      for(int i=0; i<4*length; ++i) data[i] = pal[i];
+   else if (format == GL_RGB){
+      for(int i=0; i<4*length; ++i){
+         if (i%4 == 3) data[i] = 1.;
+         else data[i] = pal[i - int(i/4)];
+      }
+   } else {
+      std::cerr<<"Texture format is nither GL_RGB nor GL_RGBA"<<std::endl;
+      return;
+   }
+   this->reload();
+}
+//--------------------------------------------------------------------------------
+const float & Texture::operator [] (int i ) const {
+   return data[i];
+}
+//--------------------------------------------------------------------------------
+float & Texture::operator [] (int i ){
+   return data[i];
+}
+//--------------------------------------------------------------------------------
+void Texture::reload(){
    checkOpenGLerror();
    glActiveTexture(TexTarget);
    glBindTexture(GL_TEXTURE_1D, textureID);
    glBindSampler(TexTarget-GL_TEXTURE0, samplerID);
    if (tex_len>0){
-      glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, tex_len, 0, GL_RGB, GL_FLOAT, pal);
+      glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, tex_len, 0, GL_RGBA, GL_FLOAT, data.get());
       glBindTexture(GL_TEXTURE_1D, textureID);
-      checkOpenGLerror();
-      glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, tex_len, 0, GL_RGB, GL_FLOAT, pal);
-      glBindTexture(GL_TEXTURE_1D, 0);
       checkOpenGLerror();
    }
    glBindTexture(GL_TEXTURE_1D, 0);
 }
 //--------------------------------------------------------------------------------
+void Texture::set_alpha(int color_num, float new_alpha){
+   if (color_num<get_length() && color_num >=0 && new_alpha <=1.0 && new_alpha>=0.){
+      data[4*color_num + 3] = new_alpha;
+      reload();
+   }
+}
 //--------------------------------------------------------------------------------
 Texture::~Texture(){
    glDeleteTextures(1,&textureID);

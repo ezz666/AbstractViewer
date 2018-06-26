@@ -20,9 +20,13 @@ class Scene3DWX(wx.glcanvas.GLCanvas):
         except AttributeError:
             return getattr(self.V, key)
 
-    def reshape(self):
+    def autoreshape(self):
         scale =self.GetContentScaleFactor()
         size = self.size =  self.GetClientSize()*scale
+        self.V.reshape(self.size.width, self.size.height)
+    def reshape(self, width, height):
+        self.size.width = width
+        self.size.height = height
         self.V.reshape(self.size.width, self.size.height)
     def update(self):
         self.Refresh(False)
@@ -49,9 +53,13 @@ class Scene2DWX(wx.glcanvas.GLCanvas):
         except AttributeError:
             return getattr(self.V, key)
 
-    def reshape(self):
+    def autoreshape(self):
         scale =self.GetContentScaleFactor()
         size = self.size =  self.GetClientSize()*scale
+        self.V.reshape(self.size.width, self.size.height)
+    def reshape(self, width, height):
+        self.size.width = width
+        self.size.height = height
         self.V.reshape(self.size.width, self.size.height)
     def update(self):
         self.Refresh(False)

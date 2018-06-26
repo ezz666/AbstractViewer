@@ -289,6 +289,56 @@ void PaletteBox::get_xyminmax(int * newxymin, int* newxymax){
     newxymax[1] = xymax.y;
 }
 //------------------------------------------------------------------------------
+// PaletteAlphaControl
+//------------------------------------------------------------------------------
+PaletteAlphaControl::PaletteAlphaControl(Texture * _tex,
+    const glm::ivec2 _min, const glm::ivec2 _max):
+  PaletteBox(_tex, _min, _max), lineVAO(){
+    lineVAO.add_buffer();
+  }
+void PaletteAlphaControl::set_alpha(int color_num, float new_alpha){
+  tex->set_alpha(color_num, new_alpha);
+}
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+void PaletteAlphaControl::load_on_device(){
+  PaletteBox::load_on_device();
+  line.reset(new glm::vec3 [(2+tex->get_length())]);
+  std::unique_ptr< unsigned int []> indices(new unsigned int [2+ tex->get_length()]);
+  float alpha = 0.5f * ((*tex)[3] + (*tex)[tex->get_length()*4 -1]);
+  if (vertical){
+    line[0] = glm::vec3(alpha, xymin.y,0);
+    line[tex->get_length() + 1] = glm::vec3(alpha, xymax.y, 0);
+  } else {
+    line[0] = glm::vec3(xymin.x, alpha, 0);
+    line[tex->get_length() + 1] = glm::vec3(xymax.x, alpha, 0);
+  }
+  indices[0] = 0;
+  indices[tex->get_length() +1] = tex->get_length() +1;
+  for(int i=1; i< tex->get_length(); ++i){
+    float prop = float(i+0.5)/tex->get_length();
+    if (vertical){
+      float ycoord = xymin.y*prop + xymax.y*(1-prop);
+      line[i] = glm::vec3((*tex)[4*i-1], ycoord, 0);
+    } else {
+      float xcoord = xymin.x*prop + xymax.x*(1-prop);
+      line[i] = glm::vec3(xcoord, (*tex)[4*i-1], 0);
+    }
+    indices[i] = i;
+  }
+  lineVAO.load_data(POS, sizeof(glm::vec3) * (2+ tex->get_length()), line.get());
+  lineVAO.load_indices((2+tex->get_length())*sizeof(unsigned int), indices.get());
+  VAO.release();
+  checkOpenGLerror();
+}
+//------------------------------------------------------------------------------
+void PaletteAlphaControl::plot(ShaderProg * spr){
+  PaletteBox::plot(spr);
+  lineVAO.bind();
+  glDrawElementsInstanced(GL_LINES_ADJACENCY, 2*(1+ tex->get_length()), GL_UNSIGNED_INT, (void*) 0, 1);
+  lineVAO.release();
+}
+//------------------------------------------------------------------------------
 // VolumeTemplate
 //------------------------------------------------------------------------------
 VolumeTemplate::VolumeTemplate():Plottable(), data(new Texture3D(nullptr, 0, 0, 0, GL_TEXTURE1, GL_RGB, GL_RGB, false)),//, GL_RGB, GL_RGB, false),

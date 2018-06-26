@@ -107,7 +107,7 @@ class ViewerWX(UniversalViewer, wx.App):
     def OnExitApp(self, evt):
         self.exit()
     def OnSize(self, event):
-        self.V.reshape()
+        self.V.autoreshape()
         #event.Skip()
     def OnIdle(self, event):
         self.idle()
@@ -230,12 +230,12 @@ class PaletteWidget(Scene2DWX):
         self.display()
     def OnSize(self,evt):
         self.MakeCurrent()
-        self.reshape()
+        self.autoreshape()
         self.automove()
         self.update()
     def OnPaint(self, event):
         self.MakeCurrent()
-        self.reshape()
+        self.autoreshape()
         self.Draw()
     def BindAll(self):
         self.Bind(wx.EVT_PAINT, self.OnPaint)
