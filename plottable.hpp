@@ -5,6 +5,7 @@
 #define POS 0
 #define CLR 1
 #define NRM 2
+//#include <GL/glew.h>
 #include <GL/glew.h>
 # define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>

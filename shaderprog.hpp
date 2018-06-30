@@ -49,6 +49,20 @@ class Texture3D: public Texture{
         void use_texture(ShaderProg *spr, const char * name, GLenum texture = GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS);
 };
 //--------------------------------------------------------------------------------
+# ifndef SWIG
+class PixelsData: public std::unique_ptr<GLubyte []>{
+    protected:
+        std::size_t datasize;
+    public:
+        PixelsData();
+        PixelsData(const PixelsData & pd);
+        void reinit(int w, int h, int type);
+        PixelsData & operator = (const PixelsData & pd);
+        PixelsData(int w, int h, int type);
+        const std::size_t & get_size();
+};
+# endif // SWIG
+//--------------------------------------------------------------------------------
 // FRAMEBUFFERS
 //--------------------------------------------------------------------------------
 class FrameBuffer{
@@ -56,6 +70,7 @@ class FrameBuffer{
         GLuint frame_buffer, render_buffer,depth_buffer;
         GLenum type;
         int _width, _height;
+        PixelsData data;
     public:
         FrameBuffer(int w, int h, int _type= (int)GL_RGBA);
         ~FrameBuffer();
@@ -64,6 +79,7 @@ class FrameBuffer{
         int height(){return _height;};
         void bind_draw();
         void bind_read();
+        PixelsData & ReadPixels();
         //int pixels_num(){return _width*_height;};
         void relax();
 };

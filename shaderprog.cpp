@@ -369,10 +369,32 @@ void Texture3D::use_texture(ShaderProg * spr, const char* name, GLenum texture){
    //printf("texture use set\n");
 }
 //--------------------------------------------------------------------------------
+PixelsData::PixelsData(): std::unique_ptr<GLubyte []>(nullptr), datasize(0){}
+PixelsData::PixelsData(int w, int h, int type){
+   reinit(w,h,type);
+}
+PixelsData::PixelsData(const PixelsData & pd): std::unique_ptr<GLubyte []>(new GLubyte[pd.datasize]), datasize(pd.datasize){
+   memcpy(get(), pd.get(), datasize);
+}
+void PixelsData::reinit(int w, int h, int type){
+   std::size_t byte_depth = 4;
+   if (type ==(int)GL_RGB) byte_depth =3;
+   datasize = byte_depth *w *h;
+   this->reset(new GLubyte[datasize]);
+}
+PixelsData & PixelsData::operator = (const PixelsData & pd){
+   reset(new GLubyte[pd.datasize]);
+   datasize=pd.datasize;
+   memcpy(get(), pd.get(), datasize);
+   return *this;
+}
+const std::size_t & PixelsData::get_size(){
+   return datasize;
+}
+//--------------------------------------------------------------------------------
 // FRAMEBUFFERS
 //--------------------------------------------------------------------------------
-FrameBuffer::FrameBuffer(int w, int h, int _type){
-   _width = w; _height = h;
+FrameBuffer::FrameBuffer(int w, int h, int _type):type(_type), _width(w), _height(h), data(){
    type= (GLenum)_type;
    glGenFramebuffers(1,&frame_buffer);
    glBindFramebuffer(GL_FRAMEBUFFER,frame_buffer);
@@ -425,5 +447,16 @@ void FrameBuffer::bind_read(){
 //--------------------------------------------------------------------------------
 void FrameBuffer::relax(){
    glBindFramebuffer(GL_FRAMEBUFFER,0);
+   data.reinit(0,0, GL_RGBA);
+}
+//--------------------------------------------------------------------------------
+PixelsData & FrameBuffer::ReadPixels(){
+   data.reinit(_width, _height, type);
+   //auto bytes_depth = 4;
+   //if(type == GL_RGB) bytes_depth =3;
+   //data.reset(new GLubyte[_width*_height*bytes_depth]);
+   bind_read();
+   glReadPixels(0, 0, _width, _height, GL_RGBA, GL_UNSIGNED_BYTE, data.get());
+   return data;
 }
 //--------------------------------------------------------------------------------

@@ -7,8 +7,9 @@
 #define Sens ((float)(180.f/M_PI))
 #endif //DEBIAN
 #include <GL/glew.h>
+//#include <GL/glew.h>
 //#include <GL/glut.h>
-#include <GL/glu.h>
+//#include <GL/glu.h>
 # define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 //#include <glm/gtx/projection.hpp>
@@ -20,7 +21,7 @@
 #include <glm/gtc/type_ptr.hpp>
 //#include <aivlib/mystream.hpp>
 #include <string>
-#include <future>
+//#include <future>
 #include "shaderprog.hpp"
 class ShaderProg;
 //#define sur_size 4

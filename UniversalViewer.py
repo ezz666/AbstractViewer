@@ -3,8 +3,11 @@
 # in addition we assume that all neded objects are in defaul namespace
 #from OpenGL.GLUT import *
 import os.path
-from PIL import Image
-from OpenGL import GL
+try:
+    from PIL import Image
+except ImportError:
+    Image = False
+    
 #import wx
 #from wx import glcanvas
 #from aivlib.vctf3 import *
@@ -535,6 +538,9 @@ class UniversalViewer:
         self.spr.load(vertex_string, fragment_string)
     def saveimage(self,name,width=None, height=None):
         "Сохраняет отображаемое изображение под именем name"
+        if not Image:
+            print("Install PIL to save images")
+            return
         if width is None:
             width = self.get_width()
         if height is None:  height= self.get_height()
@@ -553,12 +559,13 @@ class UniversalViewer:
         checkOpenGLerror()
         self.display()
         checkOpenGLerror()
-        self.savebuffer.bind_read()
-        checkOpenGLerror()
-        buffer = GL.glReadPixels(0, 0, width, height, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE)
-        checkOpenGLerror()
+        #self.savebuffer.bind_read()
+        #checkOpenGLerror()
+        #pd = self.savebuffer.ReadPixels()
+        #checkOpenGLerror()
         #time.sleep(0.5)
-        image = Image.frombytes(mode="RGBA", size=(width, height), data=buffer)
+        buffer = self.savebuffer.ReadPixels()
+        image = Image.frombytes(mode="RGBA", size=(width, height), data= buffer)
         image = image.transpose(Image.FLIP_TOP_BOTTOM)
         print("saved to "+name)
         image.save(name)
