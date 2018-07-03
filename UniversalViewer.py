@@ -94,6 +94,7 @@ class UniversalViewer:
         self.palettes = {}
         self.add_pal("pal", [1.,0.,0., 1.,.5,0., 1.,1.,0., 0.,1.,0., 0.,1.,1., 0.,0.,1., 1.,0.,1.])
         self.add_pal("rgb", [1.,0.,0.,0.,1.,0.,0.,0.,1.])
+        self.add_pal("grey", [0.0001, 0.0001, 0.0001, .5,.5,.5, 1.,1.,1.])
         checkOpenGLerror()
         self.Axis = Axis()
         checkOpenGLerror()

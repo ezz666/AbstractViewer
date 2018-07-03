@@ -186,6 +186,8 @@ class PaletteWidget(Scene2DWX):
         self.palettes = {}
         #self.add_pal("pal", [1.,0.,0., 1.,.5,0., 1.,1.,0., 0.,1.,0., 0.,1.,1., 0.,0.,1., 1.,0.,1.])
         #self.add_pal("rgb", [1.,0.,0.,0.,1.,0.,0.,0.,1.])
+    def toggle(self):
+        self.cbox.switch_vertical()
     def shader_extern_load(self, vertex_string, fragment_string):
         "Загружает шейдеры из файлов"
         self.spr.extern_load(vertex_string, fragment_string)
