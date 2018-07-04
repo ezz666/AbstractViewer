@@ -257,5 +257,45 @@ class PaletteWidget(Scene2DWX):
         #self.V.Bind(wx.EVT_KEY_DOWN,self.OnKeyDown)
         #print(self.SpecialKeyDown)
         #self.V.Bind(wx.EVT_KEY_UP,self.OnKeyUp)
+class PaletteAdjuster(PaletteWidget):
+    def __init__(self, parent):
+        PaletteWidget.__init__(self, parent)
+        self._sprs = [self.spr,Shader()]
+        self._cur_spr = 0
+        self.switch_spr(1)
+        path_to_AV = os.path.dirname(__file__)
+        self.shader_extern_load(*map(lambda x : os.path.join(path_to_AV,x), ["2dv_const_c.shader","2df_const_c.shader"]) )
+        self.adjuster_widget = PaletteAlphaControl(self.cbox)
+        self.switch_spr(0)
+    def switch_spr(self, i):
+        "Переключает шейдерную программу, служебная функция"
+        self.spr = self._sprs[i]
+        self._cur_spr = i
+    def set_pal(self, pal_name):
+        "Устанавливает палитру"
+        PaletteWidget.set_pal(self, pal_name)
+        self.MakeCurrent()
+        self.adjuster_widget.load_on_device()
+        self.update()
+    def display(self):
+        self.V.display()
+        self.switch_spr(0)
+        self.spr.start()
+        self.tex.use_texture(self.spr,"pal")
+        self.V.plot(self.spr)
+        self.cbox.plot(self.spr)
+        self.spr.stop()
+        self.switch_spr(1)
+        self.spr.start()
+        self.V.plot(self.spr)
+        self.adjuster_widget.plot(self.spr)
+        self.spr.stop()
+        self.SwapBuffers()
+    def set_alpha(self, color_num, alpha):
+        self.adjuster_widget.set_alpha(color_num, alpha)
+        self.update()
+    def plot(self):
+        PaletteWidget.plot(self)
+        self.adjuster_widget.load_on_device()
 
 

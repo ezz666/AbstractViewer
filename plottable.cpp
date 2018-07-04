@@ -248,6 +248,10 @@ void PaletteBox::set_texture(Texture * _tex) {
     this->tex = _tex;
 }
 //------------------------------------------------------------------------------
+Texture * PaletteBox::get_texture() {
+    return tex;
+}
+//------------------------------------------------------------------------------
 void PaletteBox::plot(ShaderProg * spr) {
     //int Ntr = 3;
     AttachToShader(spr);
@@ -291,52 +295,79 @@ void PaletteBox::get_xyminmax(int * newxymin, int* newxymax){
 //------------------------------------------------------------------------------
 // PaletteAlphaControl
 //------------------------------------------------------------------------------
-PaletteAlphaControl::PaletteAlphaControl(Texture * _tex,
-    const glm::ivec2 _min, const glm::ivec2 _max):
-  PaletteBox(_tex, _min, _max), lineVAO(){
-    lineVAO.add_buffer();
-  }
-void PaletteAlphaControl::set_alpha(int color_num, float new_alpha){
-  tex->set_alpha(color_num, new_alpha);
+PaletteAlphaControl::PaletteAlphaControl(PaletteBox * _tex):
+    Plottable(), unif_clr(-1), clr(.5f), pal(_tex){
+  VAO.add_buffer();
 }
 //------------------------------------------------------------------------------
+void PaletteAlphaControl::set_alpha(int color_num, float new_alpha){
+  pal->get_texture()->set_alpha(color_num, new_alpha);
+  load_on_device();
+}
 //------------------------------------------------------------------------------
 void PaletteAlphaControl::load_on_device(){
-  PaletteBox::load_on_device();
-  line.reset(new glm::vec3 [(2+tex->get_length())]);
-  std::unique_ptr< unsigned int []> indices(new unsigned int [2+ tex->get_length()]);
-  float alpha = 0.5f * ((*tex)[3] + (*tex)[tex->get_length()*4 -1]);
-  if (vertical){
-    line[0] = glm::vec3(alpha, xymin.y,0);
-    line[tex->get_length() + 1] = glm::vec3(alpha, xymax.y, 0);
-  } else {
-    line[0] = glm::vec3(xymin.x, alpha, 0);
-    line[tex->get_length() + 1] = glm::vec3(xymax.x, alpha, 0);
-  }
-  indices[0] = 0;
-  indices[tex->get_length() +1] = tex->get_length() +1;
-  for(int i=1; i< tex->get_length(); ++i){
-    float prop = float(i+0.5)/tex->get_length();
-    if (vertical){
-      float ycoord = xymin.y*prop + xymax.y*(1-prop);
-      line[i] = glm::vec3((*tex)[4*i-1], ycoord, 0);
+  Texture * tex = pal->get_texture();
+  glm::ivec2 xymin, xymax;
+  pal->get_xyminmax( reinterpret_cast<int *>(&xymin), reinterpret_cast<int *>(&xymax));
+  line.reset(new glm::vec3 [(tex->get_length())]);
+  std::unique_ptr< unsigned int []> indices(new unsigned int [tex->get_length()]);
+  //float alpha = 0.5f * ((*tex)[3] + (*tex)[tex->get_length()*4 -1]);
+  //if (pal->get_vertical()){
+  //  line[0] = glm::vec3(xymax.x*alpha+ xymin.x*(1-alpha), xymin.y,0.1);
+  //  line[tex->get_length() + 1] = glm::vec3(alpha*xymax.x+ xymin.x*(1-alpha), xymax.y, 0.1);
+  //} else {
+  //  line[0] = glm::vec3(xymin.x, xymin.y*(1-alpha)+ xymax.y*alpha, 0.1);
+  //  line[tex->get_length() + 1] = glm::vec3(xymax.x, xymin.y*(1-alpha)+ xymax.y*alpha, 0.1);
+  //}
+  //indices[0] = 0;
+  //indices[tex->get_length() +1] = tex->get_length() +1;
+  float alpha;
+  for(int i=0; i< tex->get_length(); ++i){
+    float prop = float(i)/(tex->get_length()-1);
+    alpha = (*tex)[4*i+3];
+    if (pal->get_vertical()){
+      float ycoord = xymax.y*prop + xymin.y*(1-prop);
+      line[i] = glm::vec3(xymax.x*alpha + xymin.x*(1-alpha), ycoord, 0.1);
     } else {
-      float xcoord = xymin.x*prop + xymax.x*(1-prop);
-      line[i] = glm::vec3(xcoord, (*tex)[4*i-1], 0);
+      float xcoord = xymax.x*prop + xymin.x*(1-prop);
+      line[i] = glm::vec3(xcoord,xymax.y*alpha + xymin.y*(1-alpha) , 0.1);
     }
     indices[i] = i;
   }
-  lineVAO.load_data(POS, sizeof(glm::vec3) * (2+ tex->get_length()), line.get());
-  lineVAO.load_indices((2+tex->get_length())*sizeof(unsigned int), indices.get());
+  VAO.load_data(POS, sizeof(glm::vec3) * (tex->get_length()), line.get());
+  std::cout<<"points:"<<std::endl;
+  for(int i=0; i<3*(tex->get_length());i++){
+    std::cout<<line[i/3][i%3];
+    if(i%3==2) std::cout<<std::endl;
+    else std::cout<<",";
+  }
+  std::cout<<std::endl;
+  std::cout<<"indices"<<std::endl;
+  for(int i=0; i<(tex->get_length());i++){
+    std::cout<<indices[i];
+    std::cout<<" ";
+  }
+  std::cout<<std::endl;
+  VAO.load_indices((tex->get_length())*sizeof(unsigned int), indices.get());
   VAO.release();
   checkOpenGLerror();
 }
 //------------------------------------------------------------------------------
 void PaletteAlphaControl::plot(ShaderProg * spr){
-  PaletteBox::plot(spr);
-  lineVAO.bind();
-  glDrawElementsInstanced(GL_LINES_ADJACENCY, 2*(1+ tex->get_length()), GL_UNSIGNED_INT, (void*) 0, 1);
-  lineVAO.release();
+  AttachToShader(spr);
+  VAO.bind();
+  glDrawElementsInstanced(GL_LINE_STRIP, (pal->get_texture()->get_length()), GL_UNSIGNED_INT, (void*) 0, 1);
+  VAO.release();
+}
+//------------------------------------------------------------------------------
+void PaletteAlphaControl::AttachToShader(ShaderProg * spr) {
+  VAO.bind();
+  spr->AttachUniform(unif_clr,"clr");
+  spr->AttachAttr(VAO.get_attr(POS),"coord");
+  if (unif_clr != -1) glUniform3f(unif_clr, clr[0], clr[1], clr[2]);
+  std::cout<<"#"<<clr[0]<<", "<<clr[1]<<", "<<clr[2]<<std::endl;
+  VAO.enable_attr(POS, 3, GL_FLOAT);
+  VAO.release();
 }
 //------------------------------------------------------------------------------
 // VolumeTemplate

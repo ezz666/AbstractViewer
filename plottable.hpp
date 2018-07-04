@@ -161,6 +161,7 @@ class PaletteBox: public Plottable{
     void load_on_device();
     bool get_vertical();
     void set_texture(Texture * tex);
+    Texture * get_texture();
     void switch_vertical();
     void set_vertical(bool new_vert);
     void AttachToShader(ShaderProg * spr);
@@ -169,15 +170,18 @@ class PaletteBox: public Plottable{
     void get_xyminmax(int * newxymin, int * newxymax);
 };
 //------------------------------------------------------------------------------
-class PaletteAlphaControl: public PaletteBox {
+class PaletteAlphaControl: public Plottable {
     protected:
         std::unique_ptr<glm::vec3[]> line;
-        VertexArray lineVAO;
-    public: 
-        PaletteAlphaControl(Texture * _tex = nullptr, const glm::ivec2 _min = glm::ivec2(-1), const glm::ivec2 _max = glm::ivec2(1));
+        GLint unif_clr;
+        glm::vec3 clr;
+        PaletteBox * pal;
+    public:
+        PaletteAlphaControl(PaletteBox * _tex = nullptr);
         void set_alpha(int color_num, float new_alpha);
         void load_on_device();
         void plot(ShaderProg * spr);
+        void AttachToShader(ShaderProg * spr);
 };
 //------------------------------------------------------------------------------
 #endif //PLOTTABLE

@@ -239,6 +239,14 @@ void Texture::reload(){
    glBindTexture(GL_TEXTURE_1D, 0);
 }
 //--------------------------------------------------------------------------------
+float Texture::get_alpha(int color_num){
+   if (color_num<get_length() && color_num >=0){
+      return data[4*color_num + 3];
+   } else {
+      return -1;
+   }
+}
+//--------------------------------------------------------------------------------
 void Texture::set_alpha(int color_num, float new_alpha){
    if (color_num<get_length() && color_num >=0 && new_alpha <=1.0 && new_alpha>=0.){
       data[4*color_num + 3] = new_alpha;

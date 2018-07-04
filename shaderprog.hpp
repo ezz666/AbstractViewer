@@ -26,6 +26,7 @@ class Texture{
         Texture(const float * pal, int length, GLenum _TexTarget=GL_TEXTURE0, GLenum format = GL_RGB);
         void load(const float* pal, int length, GLenum format = GL_RGB);
         void set_alpha(int color_num, float new_alpha);
+        float get_alpha(int color_num);
         void reload();
         ~Texture();
         int get_length();

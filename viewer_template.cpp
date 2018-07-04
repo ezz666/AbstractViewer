@@ -439,7 +439,7 @@ void Viewer2D::GL_init(){
     checkOpenGLerror();
     glewExperimental=GL_TRUE;
     //glEnable(GL_DEPTH_TEST);
-    //glDepthFunc(GL_LEQUAL);
+    //glDepthFunc(GL_GREATER);
     //glDepthRange(-1.,1.);
     glShadeModel(GL_SMOOTH);
     glewInit();
