@@ -347,7 +347,6 @@ void PaletteAlphaControl::load_on_device(){
   //  std::cout<<indices[i];
   //  std::cout<<" ";
   //}
-  std::cout<<std::endl;
   VAO.load_indices((tex->get_length())*sizeof(unsigned int), indices.get());
   VAO.release();
   checkOpenGLerror();
