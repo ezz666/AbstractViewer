@@ -335,18 +335,18 @@ void PaletteAlphaControl::load_on_device(){
     indices[i] = i;
   }
   VAO.load_data(POS, sizeof(glm::vec3) * (tex->get_length()), line.get());
-  std::cout<<"points:"<<std::endl;
-  for(int i=0; i<3*(tex->get_length());i++){
-    std::cout<<line[i/3][i%3];
-    if(i%3==2) std::cout<<std::endl;
-    else std::cout<<",";
-  }
-  std::cout<<std::endl;
-  std::cout<<"indices"<<std::endl;
-  for(int i=0; i<(tex->get_length());i++){
-    std::cout<<indices[i];
-    std::cout<<" ";
-  }
+  //std::cout<<"points:"<<std::endl;
+  //for(int i=0; i<3*(tex->get_length());i++){
+  //  std::cout<<line[i/3][i%3];
+  //  if(i%3==2) std::cout<<std::endl;
+  //  else std::cout<<",";
+  //}
+  //std::cout<<std::endl;
+  //std::cout<<"indices"<<std::endl;
+  //for(int i=0; i<(tex->get_length());i++){
+  //  std::cout<<indices[i];
+  //  std::cout<<" ";
+  //}
   std::cout<<std::endl;
   VAO.load_indices((tex->get_length())*sizeof(unsigned int), indices.get());
   VAO.release();
@@ -365,7 +365,7 @@ void PaletteAlphaControl::AttachToShader(ShaderProg * spr) {
   spr->AttachUniform(unif_clr,"clr");
   spr->AttachAttr(VAO.get_attr(POS),"coord");
   if (unif_clr != -1) glUniform3f(unif_clr, clr[0], clr[1], clr[2]);
-  std::cout<<"#"<<clr[0]<<", "<<clr[1]<<", "<<clr[2]<<std::endl;
+  //std::cout<<"#"<<clr[0]<<", "<<clr[1]<<", "<<clr[2]<<std::endl;
   VAO.enable_attr(POS, 3, GL_FLOAT);
   VAO.release();
 }

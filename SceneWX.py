@@ -19,7 +19,10 @@ class Scene3DWX(wx.glcanvas.GLCanvas):
             return self.__getattribute__(key)
         except AttributeError:
             return getattr(self.V, key)
-
+    #def plot(self, spr):
+    #    self.MakeCurrent()
+    #    self.V.plot(spr)
+    #    self.update()
     def autoreshape(self):
         scale =self.GetContentScaleFactor()
         size = self.size =  self.GetClientSize()*scale

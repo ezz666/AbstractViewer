@@ -252,7 +252,7 @@ class UniversalViewer:
                     self.execute(func, x=x,y=y)
                     #print("Executing", func)
                     break
-            self.V.update()
+            #self.V.update()
             #glutPostRedisplay()
         return KeyHandler
     def help(self, myobject=None):
@@ -278,12 +278,15 @@ class UniversalViewer:
     def set_view(self,pitch, yaw, roll):
         "Устанавливает вид по углам Эйлера порядок y z y"
         self.V.set_view(pitch,yaw,roll)
+        self.V.update()
     def set_pos(self, x, y, z):
         "Устанавливает смещение"
         self.V.set_pos(x,y,z)
+        self.V.update()
     def set_scale(self, sc):
         "Устанавливает масштаб"
         self.V.set_scale(sc)
+        self.V.update()
     def set_xrange__(self, lower, upper):
         "Устанавливает диапазон значений по x, не меняет bb_auto"
         #self.bb_auto = False
@@ -300,14 +303,17 @@ class UniversalViewer:
         "Устанавливает диапазон значений по x, меняет bb_autp на False "
         self.bb_auto = False
         self.set_xrange__(lower,upper)
+        self.V.update()
     def set_yrange(self, lower, upper):
         "Устанавливает диапазон значений по y, меняет bb_autp на False "
         self.bb_auto = False
         self.set_yrange__(lower,upper)
+        self.V.update()
     def set_zrange(self, lower, upper):
         "Устанавливает диапазон значений по z, меняет bb_autp на False "
         self.bb_auto = False
         self.set_zrange__(lower,upper)
+        self.V.update()
     def get_scale(self):
         "Вовращает текущий масштаб"
         return self.V.get_scale()
@@ -342,9 +348,11 @@ class UniversalViewer:
     def toggle_wire(self):
         "Переключает между проволочной моделью и обычной"
         self.V.togglewire()
+        self.V.update()
     def set_wire(self, b_tf):
         "Переключение между проволочной моделью и обычной, True — проволочная, False — обычная"
         self.V.set_wire(b_tf)
+        self.V.update()
     def get_wire(self):
         "Возвращает True, если используется проволочная модель"
         return self.V.get_wire()
@@ -363,6 +371,7 @@ class UniversalViewer:
         self.V.mouse_right_click(x_min,y_min )
         self.V.drag(x+x_min,y)
         self.V.mouse_right_release(x+x_min,y_min)
+        self.V.update()
     def move(self, x, y):
         "Перемещение, в координатах окна"
         self.bb_auto=False
@@ -371,11 +380,13 @@ class UniversalViewer:
         self.V.mouse_left_click(x_min,y_min)
         self.V.drag(x,y)
         self.V.mouse_left_release(x,y)
+        self.V.update()
     def zoom(self, x):
         "Зум, в координатах окна, положительное приблидает, отрицательное отдаляет, величина игнорируется"
         self.bb_auto=False
         if x<0: self.V.mouse_wheel_down()
         else: self.V.mouse_wheel_up()
+        self.V.update()
     def idle(self):
         "Функция idle для окна"
         command = self.rl_reader.get()
@@ -451,6 +462,7 @@ class UniversalViewer:
         на величину val внутрь диапазона. pl 0,1 и 2 нижние границы по x,y и z соответственно, 4,5,6 — верхние'''
         self.bb_auto = False
         self.V.clip_plane_move(val,pl)
+        self.V.update()
     def switch_buffer(self, name,  save = True, SaveDict={}):
         '''Переключает текущее отображение на созраненное с именем name, если save — True созраняет текущие параметры отображения
         под текущим именем, SaveDict — словарь созраняемых параметров'''
@@ -517,6 +529,7 @@ class UniversalViewer:
             self.V.axis_switch()
     def display(self):
         "Функция display для окна, служебная функция"
+        self.V.MakeCurrent()
         self._display()
         #glutSetWindowTitle(self.get_title())#self.execute(self.title_template))
         self.SetWindowTitle(self.get_title())
@@ -578,10 +591,10 @@ class UniversalViewer:
     def set_title(self,template):
         "Изменяет шаблон заголовка, Шаблон является строкой для оператора форматирования"
         self.title_template = template
+        self.V.update()
     def __sigterm_handler(self,signum,frame):
         "Сохранять историю при внезапном закрытии терминала, служебная функция"
         self.exit()
-
     def __call__(self): # start main loop
         "Запускает mainloop"
         #glutSetWindowTitle(self.get_title())#self.exec(self.title_template.format(self.params)))
@@ -601,3 +614,26 @@ class UniversalViewer:
         self.MainLoop()
         #glutMainLoop()
 
+def ext_generator(name,surftype,*args):
+    "Создает внешние методы на основе текущего класса, такое наследование"
+    def ext_func(self,*args):
+        return getattr(self.Surf, name)(*args)
+    ext_func.__name__ = name
+    ext_func.__doc__=getattr(surftype, name).__doc__
+    return ext_func
+def UpdateAfter(func):
+    def wrap(self,*args):
+        result = func(self, *args)
+        self.V.update()
+        return result
+    wrap.__name__ = func.__name__
+    wrap.__doc__=func.__doc__
+    return wrap
+def ContextSwitch(func):
+    def wrap(self,*args):
+        self.V.MakeCurrent()
+        result = func(self, *args)
+        return result
+    wrap.__name__ = func.__name__
+    wrap.__doc__=func.__doc__
+    return wrap

@@ -29,8 +29,6 @@ class ViewerWX(UniversalViewer, wx.App):
         #frame.CreateStatusBar()
         frame = FrameWX()
 
-
-
         # set the frame to a good size for showing the two buttons
         #win.SetFocus()
         #self.window = win
@@ -107,6 +105,7 @@ class ViewerWX(UniversalViewer, wx.App):
     def OnExitApp(self, evt):
         self.exit()
     def OnSize(self, event):
+        self.V.MakeCurrent()
         self.V.autoreshape()
         #event.Skip()
     def OnIdle(self, event):
@@ -188,6 +187,7 @@ class PaletteWidget(Scene2DWX):
         #self.add_pal("rgb", [1.,0.,0.,0.,1.,0.,0.,0.,1.])
     def toggle(self):
         self.cbox.switch_vertical()
+        self.plot()
     def shader_extern_load(self, vertex_string, fragment_string):
         "Загружает шейдеры из файлов"
         self.spr.extern_load(vertex_string, fragment_string)
@@ -208,14 +208,14 @@ class PaletteWidget(Scene2DWX):
         self.tex = self.palettes[pal_name]
         self.cur_pal = pal_name
         self.cbox.set_texture( self.palettes[self.cur_pal] )
-        self.update()
+        self.plot()
     def plot(self):
         self.MakeCurrent()
-        self.cbox._load_on_device = self.cbox.load_on_device
-        def myload():
-            self.cbox._load_on_device()
-            self.update()
-        self.cbox.load_on_device = myload
+        #self.cbox._load_on_device = self.cbox.load_on_device
+        #def myload():
+        #    self.cbox._load_on_device()
+        #    self.update()
+        #self.cbox.load_on_device = myload
         self.cbox.load_on_device()
     def display(self):
         self.V.display()
@@ -294,8 +294,11 @@ class PaletteAdjuster(PaletteWidget):
     def set_alpha(self, color_num, alpha):
         self.adjuster_widget.set_alpha(color_num, alpha)
         self.update()
-    def plot(self):
-        PaletteWidget.plot(self)
+    def load_on_device(self):
+        self.MakeCurrent()
+        self.cbox.load_on_device()
         self.adjuster_widget.load_on_device()
-
+        self.update()
+    def plot(self):
+        self.load_on_device()
 
