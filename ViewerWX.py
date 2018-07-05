@@ -292,6 +292,9 @@ class PaletteAdjuster(PaletteWidget):
         self.spr.stop()
         self.SwapBuffers()
     def set_alpha(self, color_num, alpha):
+        set_alpha__(self,color_num, alpha)
+    def set_alpha__(self,color_num, alpha):
+        self.MakeCurrent()
         self.adjuster_widget.set_alpha(color_num, alpha)
         self.update()
     def load_on_device(self):
@@ -301,4 +304,18 @@ class PaletteAdjuster(PaletteWidget):
         self.update()
     def plot(self):
         self.load_on_device()
+    def OnLeftDown(self, evt):
+        scale =self.GetContentScaleFactor()
+        x,y = evt.GetPosition()
+        x*=scale
+        y*=scale
+        w,h = self.size.width, self.size.height
+        texlength = self.tex.get_length()
+        if self.cbox.get_vertical():
+            self.set_alpha( int((h-y)*texlength/h), float(x)/w)
+        else:
+            self.set_alpha( int(x*texlength/w), float(h-y)/h)
+    def BindAll(self):
+        PaletteWidget.BindAll(self)
+        self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftDown)
 
