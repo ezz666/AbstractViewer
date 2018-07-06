@@ -197,19 +197,22 @@ class PaletteWidget(Scene2DWX):
     def add_pal(self, name, pal_list):
         '''Добавляет палитру с именем name и цветами заданными в виде списка float со значениями от 0 до 1,
         они групируются по 3 формируя цвета, длина округляется до ближайшей снизу кратной 3'''
-        self.MakeCurrent()
         truncate3 = lambda x: x - x%3
         nlen = truncate3(len(pal_list))
         pal = float_array(nlen)
         for i, v in enumerate(pal_list[:nlen]): pal[i] = v
+        self.MakeCurrent()
         self.palettes[name] = Texture(pal, int(nlen/3))
     def set_pal(self, pal_name):
         "Устанавливает палитру"
+        #print("setting pal {}".format(pal_name))
         self.tex = self.palettes[pal_name]
         self.cur_pal = pal_name
+        self.MakeCurrent()
         self.cbox.set_texture( self.palettes[self.cur_pal] )
         self.plot()
     def plot(self):
+        #print("Cbox plot")
         self.MakeCurrent()
         #self.cbox._load_on_device = self.cbox.load_on_device
         #def myload():
@@ -218,6 +221,7 @@ class PaletteWidget(Scene2DWX):
         #self.cbox.load_on_device = myload
         self.cbox.load_on_device()
     def display(self):
+        #print("Cbox display")
         self.V.display()
         self.spr.start()
         self.tex.use_texture(self.spr,"pal")
@@ -227,6 +231,7 @@ class PaletteWidget(Scene2DWX):
         self.spr.stop()
         self.SwapBuffers()
     def Draw(self):
+        #print("Cbox DRAW")
         self.MakeCurrent()
         self.automove()
         self.display()
@@ -236,6 +241,7 @@ class PaletteWidget(Scene2DWX):
         self.automove()
         self.update()
     def OnPaint(self, event):
+        #print("CBOX paint")
         self.MakeCurrent()
         self.autoreshape()
         self.Draw()
@@ -278,6 +284,7 @@ class PaletteAdjuster(PaletteWidget):
         self.adjuster_widget.load_on_device()
         self.update()
     def display(self):
+        #print("Adjuster display")
         self.V.display()
         self.switch_spr(0)
         self.spr.start()
@@ -298,14 +305,19 @@ class PaletteAdjuster(PaletteWidget):
         self.adjuster_widget.set_alpha(color_num, alpha)
         self.update()
     def load_on_device(self):
+        #print("Adjuster load on device")
         self.MakeCurrent()
         self.cbox.load_on_device()
+        #print("Loading line")
         self.adjuster_widget.load_on_device()
-        self.update()
+        #print("Line loaded")
+        #self.update()
+        #print("widget updated")
     def plot(self):
+        #print("Adjuster plot")
         self.load_on_device()
     def OnLeftDown(self, evt):
-        scale =self.GetContentScaleFactor()
+        scale = self.GetContentScaleFactor()
         x,y = evt.GetPosition()
         x*=scale
         y*=scale
