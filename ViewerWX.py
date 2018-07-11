@@ -1,5 +1,5 @@
 import wx
-from wx import glcanvas
+#from wx import glcanvas
 from UniversalViewer import *
 from SceneWX import *
 
