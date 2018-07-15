@@ -3,6 +3,7 @@
 # in addition we assume that all neded objects are in defaul namespace
 #from OpenGL.GLUT import *
 import os.path
+import sys, os
 try:
     from PIL import Image
 except ImportError:
@@ -12,16 +13,16 @@ except ImportError:
 #from wx import glcanvas
 #from aivlib.vctf3 import *
 #from collections import MutableMapping
-import sys
 import time
 import signal
 import multiprocessing
 import threading
-from async_input import *
+#from async_input import *
 from core import *
 from string import Formatter
 from math import *
 import six, inspect
+import pydoc
 
 def threaded(f):
     def wrap(*args, **kwargs):
@@ -86,7 +87,10 @@ SurfTemplateKeys =  [ ("extendrange(1.1)","+",["Ctrl"]), ("extendrange(1.1)","+"
         ("rangemove(0.1,False)","}")
         ]
 
+#rl_reader = rl_async_reader(os.path.expanduser("~/.{}_history".format(os.path.basename(sys.argv[0]))))
 class UniversalViewer:
+    def __init__(self, reader):
+        self.reader_pipe = reader
     def AbstractInit(self):
         self.V.GL_init()
         self.spr = Shader()
@@ -98,7 +102,14 @@ class UniversalViewer:
         checkOpenGLerror()
         self.Axis = Axis()
         checkOpenGLerror()
-        self.rl_reader = rl_async_reader(sys.stdin.fileno(), os.path.expanduser("~/.{}_history".format(os.path.basename(sys.argv[0]))))
+        sys.stdin.close()
+        #if sys.stdin is not None:
+        #    try:
+        #        #sys.stdin.close()
+        #        sys.stdin = open(os.devnull)
+        #    except (OSError, ValueError):
+        #        pass
+        #sys.stdin = io.StringIO()
         self.Axis.load_on_device()
         checkOpenGLerror()
         self.savebuffer = FrameBuffer(self.V.get_width(), self.V.get_height());
@@ -257,20 +268,21 @@ class UniversalViewer:
         return KeyHandler
     def help(self, myobject=None):
         "Показать справку на обьект"
-        @threaded
-        def help_thread(self, myobject):
-            self.__help.acquire()
-            os.kill(self._t.pid,signal.SIGSTOP)
-            self.rl_reader.lock.release() # Мы его остановили так что можно освободить
-            self.rl_reader.lock.acquire() # и занять lock на чтенеие
-            if myobject is None:
-                help(self)
-            else: help(myobject)
-            # освобождение замка на чтение тут не нужно, т.к. продолжение
-            # _t его должно захватывать
-            os.kill(self._t.pid,signal.SIGCONT)
-            self.__help.release()
-        help_thread(self,myobject)
+        self.reader_pipe.send(("help", pydoc.render_doc(myobject)))
+        #@threaded
+        #def help_thread(self, myobject):
+        #    self.__help.acquire()
+        #    os.kill(self.reader_pipe.pid,signal.SIGSTOP)
+        #    self.rl_reader.lock.release() # Мы его остановили так что можно освободить
+        #    self.rl_reader.lock.acquire() # и занять lock на чтенеие
+        #    if myobject is None:
+        #        help(self)
+        #    else: help(myobject)
+        #    # освобождение замка на чтение тут не нужно, т.к. продолжение
+        #    # _t его должно захватывать
+        #    os.kill(self.rl_reader.pid,signal.SIGCONT)
+        #    self.__help.release()
+        #help_thread(self,myobject)
     def set_pal(self, pal_name):
         "Устанавливает палитру"
         self.tex = self.palettes[pal_name]
@@ -389,8 +401,10 @@ class UniversalViewer:
         self.V.update()
     def idle(self):
         "Функция idle для окна"
-        command = self.rl_reader.get()
-        while(command):
+
+        #command = self.reader_pipe.get()
+        while(self.reader_pipe.poll()):
+            command = self.reader_pipe.recv()
             try:
                 if isinstance (command, str):
                     self.execute(command)
@@ -398,13 +412,13 @@ class UniversalViewer:
             except (NameError, SyntaxError, TypeError):
                 import traceback, sys
                 traceback.print_exception( *sys.exc_info())
-                command = self.rl_reader.get()
+                #command = self.rl_reader.get()
             except:
                 command = ""
                 import traceback, sys
                 traceback.print_exception( *sys.exc_info())
                 self.exit()
-            else: command = self.rl_reader.get()
+            #else: command = self.rl_reader.get()
         cur_time = time.time()
         for i, (name, last_time, interval, action) in enumerate(self.idle_actions):
             if cur_time-last_time>=interval:
@@ -595,6 +609,8 @@ class UniversalViewer:
     def __sigterm_handler(self,signum,frame):
         "Сохранять историю при внезапном закрытии терминала, служебная функция"
         self.exit()
+    def update_completion(self,namespace):
+        self.reader_pipe.send(("update_completion",namespace))
     def __call__(self): # start main loop
         "Запускает mainloop"
         #glutSetWindowTitle(self.get_title())#self.exec(self.title_template.format(self.params)))
@@ -608,7 +624,7 @@ class UniversalViewer:
         #glutReshapeFunc(self.V.reshape)
         #glutIdleFunc(self.idle)
         #glutCloseFunc(self.exit)
-        self._t=self.rl_reader()
+        #self._t=self.rl_reader()
         signal.signal(signal.SIGHUP,self.__sigterm_handler)
         self.Bind()
         self.MainLoop()

@@ -21,7 +21,8 @@ class FrameWX(wx.Frame):
         self.layout.Add(wdg, proportion, wx.EXPAND|wx.ALL, size)
 
 class ViewerWX(UniversalViewer, wx.App):
-    def __init__(self, argv):
+    def __init__(self, reader, rargv):
+        UniversalViewer.__init__(self, reader)
         wx.App.__init__(self, redirect=False)
         self.ExitOnFrameDelete=True
         #self.argv= argv
@@ -89,10 +90,10 @@ class ViewerWX(UniversalViewer, wx.App):
         "Закрывает окно и завершает програму"
         if (self._closed == True): return
         self._closed = True
-        os.kill(self._t.pid,signal.SIGHUP)
-        self.rl_reader.lock.acquire()
-        self.rl_reader.lock.release()
-        self._t.join()
+        #os.kill(self.rl_reader.pid,signal.SIGHUP)
+        #self.rl_reader.lock.acquire()
+        #self.rl_reader.lock.release()
+        #self._t.join()
         #glutLeaveMainLoop()
         self.frame.Show(True)
         self.frame.SetFocus()

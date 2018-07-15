@@ -10,10 +10,11 @@ class Scene3DQT(QGLWidget):
             format.setProfile(QtOpenGL.QGLFormat.CoreProfile)
         #glformat.setSampleBuffers( True )
         super(Scene3DQT, self).__init__(format, parent)
-
-    def initializeGL(self):
         self.MakeCurrent()
         self.V = viewer.Viewer3D()
+
+    def initializeGL(self):
+        pass
         #self.SetMinSize( (300,300) )
     def __getattr__(self, key):
         try:
@@ -29,11 +30,17 @@ class Scene3DQT(QGLWidget):
         size = self.size =  self.GetClientSize()*scale
         self.V.reshape(self.size.width, self.size.height)
     def reshape(self, width, height):
-        self.size.width = width
-        self.size.height = height
-        self.V.reshape(self.size.width, self.size.height)
+        print("Reshape {}x{}".format(width, height))
+        self.width = width
+        self.height = height
+        self.V.reshape(self.width, self.height)
     def update(self):
-        self.glDraw()
+        pass
+        #self.updateGL()
+    def MakeCurrent(self):
+        return self.makeCurrent()
+    def SwapBuffers(self):
+        self.swapBuffers()
 
 class Scene2DQT(QGLWidget):
     width, height = 300,10
@@ -44,9 +51,10 @@ class Scene2DQT(QGLWidget):
             format.setProfile(QtOpenGL.QGLFormat.CoreProfile)
         #glformat.setSampleBuffers( True )
         super(Scene2DQT, self).__init__(format, parent)
-    def initializeGL(self):
         self.MakeCurrent()
         self.V = viewer.Viewer2D()
+    def initializeGL(self):
+        pass
     def __getattr__(self, key):
         try:
             return self.__getattribute__(key)
@@ -62,3 +70,5 @@ class Scene2DQT(QGLWidget):
         self.V.reshape(self.width, self.height)
     def update(self):
         self.glDraw()
+    def MakeCurrent(self):
+        return self.makeCurrent()
