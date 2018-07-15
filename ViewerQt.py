@@ -1,4 +1,4 @@
-from PyQt4 import QtGui, QtCore, QtOpenGL
+from PyQt4 import QtGui, QtCore, QtOpenGL, Qt
 from UniversalViewer import *
 from SceneQt import *
 
@@ -68,7 +68,7 @@ class ViewerQt(UniversalViewer, QtGui.QApplication):
     #def WakeUp(self):
     #    wx.WakeUpIdle()
     def OnPaint(self, event):
-        print("ViewerQt paint")
+        #print("ViewerQt paint")
         self.Draw()
     def Draw(self):
         self.V.MakeCurrent()
@@ -79,11 +79,19 @@ class ViewerQt(UniversalViewer, QtGui.QApplication):
         #self.V.Bind(wx.EVT_PAINT, self.OnPaint)
         print("Start bind")
         self.V.paintGL = lambda : self.OnPaint(None)
+        self.V.update = lambda : self.V.updateGL()
         #self.frame.Bind(wx.EVT_CLOSE, self.OnExitApp)
         print("Bind paintGL")
         self.V.resizeGL = lambda w,h: self.V.reshape(w,h)
         print("Bind resize")
         self.aboutToQuit.connect(self.OnExitApp)
+        self._timer = QtCore.QTimer(self)
+        self._timer.setInterval(0)
+        self._timer.timeout.connect(self.OnIdle)
+        self.V.mousePressEvent = self.mousePressEvent
+        self.V.mouseReleaseEvent = self.mouseReleaseEvent
+        self.V.mouseMoveEvent = self.mouseMoveEvent
+        self.V.wheelEvent = self.wheelEvent
         #self.frame
         #self.V.Bind(wx.EVT_SIZE, self.OnSize)
         #self.V.Bind(wx.EVT_LEFT_DOWN, self.OnLeftDown)
@@ -93,10 +101,12 @@ class ViewerQt(UniversalViewer, QtGui.QApplication):
         #self.V.Bind(wx.EVT_MOTION, self.OnMouseMotion)
         #self.V.Bind(wx.EVT_MOTION, self.OnMouseMotion)
         #self.V.Bind(wx.EVT_MOUSEWHEEL, self.OnWheelRotate)
-        #self.KeyDownHandler = self.get_key_function(self.KeyDown)
-        #self.KeyUpHandler = self.get_key_function(self.KeyUp)
-        #self.SpecialKeyDownHandler = self.get_key_function(self.SpecialKeyDown)
-        #self.SpecialKeyUpHandler = self.get_key_function(self.SpecialKeyUp)
+        self.KeyDownHandler = self.get_key_function(self.KeyDown)
+        self.KeyUpHandler = self.get_key_function(self.KeyUp)
+        self.SpecialKeyDownHandler = self.get_key_function(self.SpecialKeyDown)
+        self.SpecialKeyUpHandler = self.get_key_function(self.SpecialKeyUp)
+        self.V.keyPressEvent = self.OnKeyDown
+        self.V.keyReleaseEvent = self.OnKeyUp
         ##self.frame.Bind(wx.EVT_CHAR_HOOK, self.CharHook)
         ##self.V.Bind(wx.EVT_CHAR, self.OnKeyDown)
         #self.V.Bind(wx.EVT_KEY_DOWN,self.OnKeyDown)
@@ -111,40 +121,45 @@ class ViewerQt(UniversalViewer, QtGui.QApplication):
         "Закрывает окно и завершает програму"
         if (self._closed == True): return
         self._closed = True
-        os.kill(self._t.pid,signal.SIGHUP)
+        #os.kill(self._t.pid,signal.SIGHUP)
         #self.rl_reader.lock.acquire()
         #self.rl_reader.lock.release()
         #self._t.join()
         #glutLeaveMainLoop()
-        self.frame.Show(True)
-        self.frame.SetFocus()
-        self.frame.Close(True)
-        self.ExitMainLoop()
+        #self.frame.Show(True)
+        #self.frame.SetFocus()
+        #self.frame.Close(True)
+        self.reader_pipe.send(("exit", None))
+        exit()
+        #self.ExitMainLoop()
     def OnTimer(self, evt):
         self.WakeUp()
     def SetWindowTitle(self, string):
         self.frame.setWindowTitle(string)
-    def OnExitApp(self, evt):
+    def OnExitApp(self):
         self.exit()
     def OnSize(self, event):
         self.V.MakeCurrent()
         self.V.autoreshape()
         #event.Skip()
-    def OnIdle(self, event):
+    def OnIdle(self):
         self.idle()
         self.V.setFocus()
     def OnKey(self,evt):
-        k = evt.GetUnicodeKey()
-        sp_key=(k==0)
+        k = evt.key()
+        sp_key = k in KeycodeToKeyname 
+        #print(k)
         if not sp_key:
-            k = chr(k).lower()
+            k = evt.text().lower()
         else:
-            k = evt.GetKeyCode()
             if k in KeycodeToKeyname:
                 k= KeycodeToKeyname[k]
             else: k = "None"
-        x,y = evt.GetPosition()
-        mod = {"Ctrl":evt.ControlDown(), "Shift":evt.ShiftDown(), "Alt":evt.AltDown()}
+        #x,y = evt.pos().x(), evt.pos().y()
+        x,y =0,0
+        mod = {"Ctrl":(evt.modifiers() & QtCore.Qt.ControlModifier) == QtCore.Qt.ControlModifier,
+                "Shift":(evt.modifiers() & QtCore.Qt.ShiftModifier) == QtCore.Qt.ShiftModifier,
+                "Alt":(evt.modifiers() & QtCore.Qt.AltModifier) == QtCore.Qt.AltModifier}
         return k,x,y,mod, sp_key
     def OnKeyDown(self,evt):
         k,x,y,mod,spec= self.OnKey(evt)
@@ -163,7 +178,18 @@ class ViewerQt(UniversalViewer, QtGui.QApplication):
     #    evt.Skip()
     def OnMouseDown(self,evt):
         #self.V.CaptureMouse()
-        return evt.GetPosition()
+        pos = evt.pos()
+        return pos.x(),pos.y()
+    def mousePressEvent(self, evt):
+        if evt.buttons() & QtCore.Qt.LeftButton:
+            self.OnLeftDown(evt)
+        if evt.buttons() & QtCore.Qt.RightButton:
+            self.OnRightDown(evt)
+    def mouseReleaseEvent(self, evt):
+        if not (evt.buttons() & QtCore.Qt.LeftButton):
+            self.OnLeftUp(evt)
+        if not (evt.buttons() & QtCore.Qt.RightButton):
+            self.OnRightUp(evt)
     def OnLeftDown(self, evt):
         self.V.mouse_left_click(*self.OnMouseDown(evt))
         self.bb_auto = False
@@ -174,10 +200,10 @@ class ViewerQt(UniversalViewer, QtGui.QApplication):
         self.V.mouse_right_click(*self.OnMouseDown(evt))
     def OnRightUp(self, evt):
         self.V.mouse_right_release(*self.OnMouseDown(evt))
-    def OnWheelRotate(self,evt):
+    def wheelEvent(self,evt):
         self.bb_auto = False
-        rot = evt.WheelRotation
-        delta = evt.WheelDelta
+        rot = evt.delta()/120#evt.WheelRotation
+        delta = 1.#evt.delta()
         #print("WHEEL", int(abs(rot)/delta))
         if rot>0:
             self.bb_auto = False
@@ -189,12 +215,13 @@ class ViewerQt(UniversalViewer, QtGui.QApplication):
             for i in range(int(abs(rot)/delta)):
                 self.V.mouse_wheel_down()
             self.V.update()
-    def OnMouseMotion(self, evt):
-        if evt.Dragging():
-            self.V.drag(*self.OnMouseDown(evt))
-            self.V.update()
+    def mouseMoveEvent(self, evt):
+        #if evt.Dragging():
+        self.V.drag(evt.x(), evt.y())
+        self.V.update()
     def MainLoop(self):
         print("Start Main Loop")
+        self._timer.start()
         self.exec_()
 
 #class PaletteWidget(Scene2DWX):

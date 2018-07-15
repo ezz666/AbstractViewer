@@ -36,7 +36,7 @@ class Scene3DQT(QGLWidget):
         self.V.reshape(self.width, self.height)
     def update(self):
         pass
-        #self.updateGL()
+        #self.glDraw()
     def MakeCurrent(self):
         return self.makeCurrent()
     def SwapBuffers(self):

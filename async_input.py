@@ -93,6 +93,8 @@ class rl_async_reader:
             self.update_completer(args)
         elif command == "help":
             self.display_help(args)
+        elif command == "exit":
+            exit()
         else:
             pass
     #def get(self):
