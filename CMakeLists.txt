@@ -27,12 +27,15 @@ find_package(glm REQUIRED)
 include_directories(${GLM_INCLUDE_PATH})
 
 set_property(SOURCE viewer.i PROPERTY CPLUSPLUS ON)
+if (CMAKE_VERSION VERSION_GREATER "3.7")
 SWIG_ADD_LIBRARY(viewer
   TYPE MODULE
   LANGUAGE python
   SOURCES viewer.i plottable.cpp shaderprog.cpp viewer_template.cpp
 )
-#swig_add_module(viewer python viewer.i plottable.cpp shaderprog.cpp viewer_template.cpp) # DEPRECATED but may be useful for old versions
+else(CMAKE_VERSION VERSION_LESS "3.7")
+swig_add_module(viewer python viewer.i plottable.cpp shaderprog.cpp viewer_template.cpp) # DEPRECATED but may be useful for old versions
+endif(CMAKE_VERSION VERSION_GREATER "3.7")
 swig_link_libraries(viewer ${PYTHON_LIBRARIES} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES})
 configure_file(UniversalViewer.py ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
 configure_file(SceneWX.py ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
