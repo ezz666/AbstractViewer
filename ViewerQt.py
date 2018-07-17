@@ -33,7 +33,7 @@ class ViewerQt(UniversalViewer, QtGui.QApplication):
         #wx.App.__init__(self, redirect=False)
         #self.ExitOnFrameDelete=True
         self.argv= argv
-        print("ViewerQt init done")
+        #print("ViewerQt init done")
     def InitGL(self):
         #frame.CreateStatusBar()
         frame = FrameQt()
@@ -52,7 +52,7 @@ class ViewerQt(UniversalViewer, QtGui.QApplication):
         self.V.setFocus()
         self.frame = frame
         UniversalViewer.InitGL(self)
-        frame.add(self.V, 0)
+        frame.add(self.V, 300)
         frame.show()
         return True
     def add_pal(self, name, pal_list):
@@ -72,12 +72,12 @@ class ViewerQt(UniversalViewer, QtGui.QApplication):
         #print("DRAW")
     def Bind(self):
         #self.V.Bind(wx.EVT_PAINT, self.OnPaint)
-        print("Start bind")
+        #print("Start bind")
         self.V.paintGL = lambda : self.OnPaint(None)
         #self.frame.Bind(wx.EVT_CLOSE, self.OnExitApp)
-        print("Bind paintGL")
+        #print("Bind paintGL")
         self.V.resizeGL = lambda w,h: self.V.reshape(w,h)
-        print("Bind resize")
+        #print("Bind resize")
         self.aboutToQuit.connect(self.OnExitApp)
         self._timer = QtCore.QTimer(self)
         self._timer.setInterval(0)
@@ -110,7 +110,7 @@ class ViewerQt(UniversalViewer, QtGui.QApplication):
         #self.timer = wx.Timer(self)
         #self.V.Bind(wx.EVT_TIMER, self.OnTimer)
         #self.timer.Start(42)
-        print("ViewerQt bind")
+        #print("ViewerQt bind")
     def exit(self):
         "Закрывает окно и завершает програму"
         if (self._closed == True): return
@@ -217,12 +217,12 @@ class ViewerQt(UniversalViewer, QtGui.QApplication):
         self.V.drag(evt.x(), evt.y())
         self.V.update()
     def MainLoop(self):
-        print("Start Main Loop")
+        #print("Start Main Loop")
         self._timer.start()
         self.exec_()
 
 class PaletteWidget(Scene2DQT):
-    def __init__(self, parent):
+    def __init__(self, parent=None):
         self.parent = parent
         Scene2DQT.__init__(self,parent)
         self.GL_init()
@@ -246,6 +246,7 @@ class PaletteWidget(Scene2DQT):
     def add_pal(self, name, pal_list):
         '''Добавляет палитру с именем name и цветами заданными в виде списка float со значениями от 0 до 1,
         они групируются по 3 формируя цвета, длина округляется до ближайшей снизу кратной 3'''
+        #print("adding pal {}".format(name))
         truncate3 = lambda x: x - x%3
         nlen = truncate3(len(pal_list))
         pal = float_array(nlen)
@@ -289,20 +290,18 @@ class PaletteWidget(Scene2DQT):
         self.autoreshape()
         self.automove()
         self.update()
-    def OnPaint(self, event):
+    def OnPaint(self):
         #print("CBOX paint")
         self.MakeCurrent()
         self.autoreshape()
         self.Draw()
     def BindAll(self):
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
-        self.Bind(wx.EVT_SIZE, self.OnSize)
+        #self.Bind(wx.EVT_PAINT, self.OnPaint)
+        #self.Bind(wx.EVT_SIZE, self.OnSize)
         self.paintGL = self.OnPaint
         self.update = lambda : self.updateGL()
         #self.frame.Bind(wx.EVT_CLOSE, self.OnExitApp)
-        print("Bind paintGL")
         self.resizeGL = lambda w,h: self.reshape(w,h)
-        print("Bind resize")
         #self.aboutToQuit.connect(self.OnExitApp)
         #self._timer = QtCore.QTimer(self)
         #self._timer.setInterval(0)
@@ -327,7 +326,7 @@ class PaletteWidget(Scene2DQT):
         #print(self.SpecialKeyDown)
         #self.V.Bind(wx.EVT_KEY_UP,self.OnKeyUp)
 class PaletteAdjuster(PaletteWidget):
-    def __init__(self, parent):
+    def __init__(self, parent=None):
         PaletteWidget.__init__(self, parent)
         self._sprs = [self.spr,Shader()]
         self._cur_spr = 0
@@ -392,5 +391,5 @@ class PaletteAdjuster(PaletteWidget):
             self.set_alpha( int(x*texlength/w), float(h-y)/h)
     def BindAll(self):
         PaletteWidget.BindAll(self)
-        self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftDown)
+        #self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftDown)
         self.mousePressEvent = self.OnLeftDown

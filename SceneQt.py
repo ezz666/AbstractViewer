@@ -30,7 +30,7 @@ class Scene3DQT(QGLWidget):
         size = self.size =  self.GetClientSize()*scale
         self.V.reshape(self.size.width, self.size.height)
     def reshape(self, width, height):
-        print("Reshape {}x{}".format(width, height))
+        #print("Reshape {}x{}".format(width, height))
         self.width = width
         self.height = height
         self.V.reshape(self.width, self.height)

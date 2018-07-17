@@ -123,8 +123,7 @@ class UniversalViewer:
         self.add_pal("rgb", [1.,0.,0.,0.,1.,0.,0.,0.,1.])
         self.add_pal("grey", [0.0001, 0.0001, 0.0001, .5,.5,.5, 1.,1.,1.])
         checkOpenGLerror()
-        checkOpenGLerror()
-        print("Palls")
+        #print("Palls")
         #sys.stdin.close()
         #if sys.stdin is not None:
         #    try:
@@ -136,12 +135,12 @@ class UniversalViewer:
         self.V.MakeCurrent()
         self.Axis.load_on_device()
         checkOpenGLerror()
-        print("Axis")
+        #print("Axis")
         self.Surf.load_on_device()
         checkOpenGLerror()
-        print("Surf")
+        #print("Surf")
         self.set_pal("pal")
-        print("SetPal")
+        #print("SetPal")
         #self.__help = threading.RLock()
     def Bind(self):
         pass
