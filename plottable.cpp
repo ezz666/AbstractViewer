@@ -146,7 +146,10 @@ void Axis::plot(ShaderProg * spr) {
     AttachToShader(spr);
     //glBindVertexArray(VAO);
     VAO.bind();
+    glDepthFunc(GL_GREATER);
     //glDrawElements(GL_LINES,Ntr*2, GL_UNSIGNED_INT, (void *)0);
+    glDrawElementsInstanced(GL_LINES,Ntr*2, GL_UNSIGNED_INT, (void *)0,1);
+    glDepthFunc(GL_LEQUAL);
     glDrawElementsInstanced(GL_LINES,Ntr*2, GL_UNSIGNED_INT, (void *)0,1);
     //glBindVertexArray(0);
     VAO.release();

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import wx
 #from wx import glcanvas
 from UniversalViewer import *
@@ -22,11 +23,18 @@ class FrameWX(wx.Frame):
 
 class ViewerWX(UniversalViewer, wx.App):
     def __init__(self, reader, rargv):
+        print("ViewerWX INIT start")
         UniversalViewer.__init__(self, reader)
         wx.App.__init__(self, redirect=False)
+        self.V = Scene3DWX(self.frame)#, glarglist)
+        UniversalViewer.InitGL(self)
+        self.frame.add(self.V, 0, 30)
+        self.V.SetFocus()
         self.ExitOnFrameDelete=True
+        print("ViewerWX INIT")
         #self.argv= argv
     def OnInit(self):
+        print("ViewerWX OnInit start")
         #frame.CreateStatusBar()
         frame = FrameWX()
 
@@ -41,10 +49,7 @@ class ViewerWX(UniversalViewer, wx.App):
         frame.SetFocus()
         #self.cbox = Scene2DWX(frame)
         #self.cbox.GL_init()
-        self.V = Scene3DWX(frame)#, glarglist)
-        self.V.SetFocus()
         self.frame = frame
-        frame.add(self.V, 0, 30)
         self.SetTopWindow(frame)
         #self.Bind()
         return True
@@ -95,6 +100,7 @@ class ViewerWX(UniversalViewer, wx.App):
         #self.rl_reader.lock.release()
         #self._t.join()
         #glutLeaveMainLoop()
+        self.reader_pipe.send(("exit", None))
         self.frame.Show(True)
         self.frame.SetFocus()
         self.frame.Close(True)

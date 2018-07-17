@@ -1,4 +1,5 @@
-#!/usr/bin/env python2 # -*- coding: utf-8 -*-
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
 # we assume that all libs imported in advance, since they all building in one file
 # in addition we assume that all neded objects are in defaul namespace
 #from OpenGL.GLUT import *
@@ -91,33 +92,6 @@ SurfTemplateKeys =  [ ("extendrange(1.1)","+",["Ctrl"]), ("extendrange(1.1)","+"
 class UniversalViewer:
     def __init__(self, reader):
         self.reader_pipe = reader
-    def AbstractInit(self):
-        self.V.GL_init()
-        self.spr = Shader()
-        checkOpenGLerror()
-        self.palettes = {}
-        self.add_pal("pal", [1.,0.,0., 1.,.5,0., 1.,1.,0., 0.,1.,0., 0.,1.,1., 0.,0.,1., 1.,0.,1.])
-        self.add_pal("rgb", [1.,0.,0.,0.,1.,0.,0.,0.,1.])
-        self.add_pal("grey", [0.0001, 0.0001, 0.0001, .5,.5,.5, 1.,1.,1.])
-        checkOpenGLerror()
-        self.Axis = Axis()
-        checkOpenGLerror()
-        sys.stdin.close()
-        #if sys.stdin is not None:
-        #    try:
-        #        #sys.stdin.close()
-        #        sys.stdin = open(os.devnull)
-        #    except (OSError, ValueError):
-        #        pass
-        #sys.stdin = io.StringIO()
-        self.Axis.load_on_device()
-        checkOpenGLerror()
-        self.savebuffer = FrameBuffer(self.V.get_width(), self.V.get_height());
-        checkOpenGLerror()
-        d ={}
-        self._closed = False
-        for k in SpecialKeysList:
-            d[k] = []
         self.SpecialKeyUp = dict([ (k, []) for k in SpecialKeysList])
         self.SpecialKeyDown = dict([ (k, []) for k in SpecialKeysList])
         self.KeyUp = dict([(k, []) for k in KeysList])
@@ -128,11 +102,47 @@ class UniversalViewer:
         self.idle_actions = []
         self.title_template = "UniversalViewer scale:{scale}"
         self.image_name_template = "SC{scale}-V{view[0]}_{view[1]}_{view[2]}.png"
-        self.set_pal("pal")
-        self.__help = threading.RLock()
         self.buffers = {}
         self.buffer = None
         self.namespace = {}
+        self._closed = False
+    def InitGL(self):
+        self.V.MakeCurrent()
+        self.V.GL_init()
+        self.V.MakeCurrent()
+        self.spr = Shader()
+        checkOpenGLerror()
+        self.Axis = Axis()
+        checkOpenGLerror()
+        self.savebuffer = FrameBuffer(self.V.get_width(), self.V.get_height());
+        checkOpenGLerror()
+        self.palettes = {}
+    def LoadGL(self):
+        self.V.MakeCurrent()
+        self.add_pal("pal", [1.,0.,0., 1.,.5,0., 1.,1.,0., 0.,1.,0., 0.,1.,1., 0.,0.,1., 1.,0.,1.])
+        self.add_pal("rgb", [1.,0.,0.,0.,1.,0.,0.,0.,1.])
+        self.add_pal("grey", [0.0001, 0.0001, 0.0001, .5,.5,.5, 1.,1.,1.])
+        checkOpenGLerror()
+        checkOpenGLerror()
+        print("Palls")
+        #sys.stdin.close()
+        #if sys.stdin is not None:
+        #    try:
+        #        #sys.stdin.close()
+        #        sys.stdin = open(os.devnull)
+        #    except (OSError, ValueError):
+        #        pass
+        #sys.stdin = io.StringIO()
+        self.V.MakeCurrent()
+        self.Axis.load_on_device()
+        checkOpenGLerror()
+        print("Axis")
+        self.Surf.load_on_device()
+        checkOpenGLerror()
+        print("Surf")
+        self.set_pal("pal")
+        print("SetPal")
+        #self.__help = threading.RLock()
     def Bind(self):
         pass
     def SetWindowTitle(self, string):
@@ -441,7 +451,7 @@ class UniversalViewer:
         "Очищает цикл idle"
         del self.idle_actions
         self.idle_actions = []
-    def plot(self,surf):
+    def set_object(self, surf):
         "Устанавливает данне для отображения"
         self.Surf = surf
         self.Surf._load_on_device = self.Surf.load_on_device
@@ -449,7 +459,15 @@ class UniversalViewer:
             self.Surf._load_on_device()
             self.V.update()
         self.Surf.load_on_device = myload
-        self.Surf.load_on_device()
+    #def plot(self,surf):
+    #    "Устанавливает данне для отображения"
+    #    self.Surf = surf
+    #    self.Surf._load_on_device = self.Surf.load_on_device
+    #    def myload():
+    #        self.Surf._load_on_device()
+    #        self.V.update()
+    #    self.Surf.load_on_device = myload
+    #    self.Surf.load_on_device()
     #def subplot(*args);
     #    self.Surfaces += args
     def dump_params(self, **kwargs):

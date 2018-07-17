@@ -109,7 +109,7 @@ class rl_async_reader:
         myguifunc = async_process(guifunc)
         t = myguifunc(child_conn)
         self.update_completer(self.pipe.recv()[1])
-        print("Async input initialized")
+        #print("Async input initialized")
         import sys,os,time,signal
         #sys.stdin = os.fdopen(self.stdin_fid)
         import readline

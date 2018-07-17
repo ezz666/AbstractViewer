@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from core import *
 from PyQt4 import QtGui, QtCore, QtOpenGL
 from PyQt4.QtOpenGL import QGLWidget
@@ -12,7 +13,6 @@ class Scene3DQT(QGLWidget):
         super(Scene3DQT, self).__init__(format, parent)
         self.MakeCurrent()
         self.V = viewer.Viewer3D()
-
     def initializeGL(self):
         pass
         #self.SetMinSize( (300,300) )
@@ -69,6 +69,9 @@ class Scene2DQT(QGLWidget):
         self.height = height
         self.V.reshape(self.width, self.height)
     def update(self):
-        self.glDraw()
+        pass
+        #self.glDraw()
     def MakeCurrent(self):
         return self.makeCurrent()
+    def SwapBuffers(self):
+        self.swapBuffers()

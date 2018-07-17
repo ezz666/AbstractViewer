@@ -308,8 +308,6 @@ void Viewer3D::axis_switch(){
     axis_sw = !axis_sw;
     int sf = axis_sw?10:1;
     glViewport(0, 0, width/sf, height/sf);
-    if (!axis_sw) glDepthFunc(GL_LEQUAL);
-    else glDepthFunc(GL_GREATER);
 }
 //--------------------------------------------------------------------------------
 glm::vec3 Viewer3D::get_vmin() const{
