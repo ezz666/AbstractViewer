@@ -299,7 +299,7 @@ class PaletteWidget(Scene2DQT):
         #self.Bind(wx.EVT_PAINT, self.OnPaint)
         #self.Bind(wx.EVT_SIZE, self.OnSize)
         self.paintGL = self.OnPaint
-        self.update = lambda : self.updateGL()
+        #self.update = lambda : self.updateGL()
         #self.frame.Bind(wx.EVT_CLOSE, self.OnExitApp)
         self.resizeGL = lambda w,h: self.reshape(w,h)
         #self.aboutToQuit.connect(self.OnExitApp)

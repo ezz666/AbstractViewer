@@ -13,6 +13,7 @@ class Scene3DQT(QGLWidget):
         super(Scene3DQT, self).__init__(format, parent)
         self.MakeCurrent()
         self.V = viewer.Viewer3D()
+        self._needs_update = False
     def initializeGL(self):
         pass
         #self.SetMinSize( (300,300) )
@@ -35,8 +36,11 @@ class Scene3DQT(QGLWidget):
         self.height = height
         self.V.reshape(self.width, self.height)
     def update(self):
-        pass
+        self._needs_update = True
+        #pass
         #self.glDraw()
+    def real_redraw(self):
+        self.updateGL()
     def MakeCurrent(self):
         return self.makeCurrent()
     def SwapBuffers(self):
@@ -53,6 +57,7 @@ class Scene2DQT(QGLWidget):
         super(Scene2DQT, self).__init__(format, parent)
         self.MakeCurrent()
         self.V = viewer.Viewer2D()
+        self._needs_update = False
     def initializeGL(self):
         pass
     def __getattr__(self, key):
@@ -69,8 +74,11 @@ class Scene2DQT(QGLWidget):
         self.height = height
         self.V.reshape(self.width, self.height)
     def update(self):
-        pass
+        self._needs_update = True
+        #pass
         #self.glDraw()
+    def real_redraw(self):
+        self.updateGL()
     def MakeCurrent(self):
         return self.makeCurrent()
     def SwapBuffers(self):

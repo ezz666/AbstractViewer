@@ -15,6 +15,7 @@ class Scene3DWX(wx.glcanvas.GLCanvas):
         self.MakeCurrent()
         self.V = viewer.Viewer3D()
         self.SetMinSize( (300,300) )
+        self._needs_update = False
     def __getattr__(self, key):
         try:
             return self.__getattribute__(key)
@@ -33,6 +34,8 @@ class Scene3DWX(wx.glcanvas.GLCanvas):
         self.size.height = height
         self.V.reshape(self.size.width, self.size.height)
     def update(self):
+        self._needs_update = True
+    def real_redraw(self):
         self.Refresh(False)
     def MakeCurrent(self):
         self.SetCurrent(self.context)
@@ -51,6 +54,7 @@ class Scene2DWX(wx.glcanvas.GLCanvas):
         #    glGetIntegerv(GL_MINOR_VERSION))
         self.V = viewer.Viewer2D()
         self.SetMinSize( (300,10) )
+        self._needs_update = False
     def __getattr__(self, key):
         try:
             return self.__getattribute__(key)
@@ -66,6 +70,8 @@ class Scene2DWX(wx.glcanvas.GLCanvas):
         self.size.height = height
         self.V.reshape(self.size.width, self.size.height)
     def update(self):
+        self._needs_update = True
+    def real_redraw(self):
         self.Refresh(False)
     def MakeCurrent(self):
         self.SetCurrent(self.context)

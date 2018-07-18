@@ -408,9 +408,25 @@ class UniversalViewer:
         if x<0: self.V.mouse_wheel_down()
         else: self.V.mouse_wheel_up()
         self.V.update()
+    def add_idle_action(self, name, interval,action):
+        "Добавляет действие с именем name в цикл idle, с интервалом в секундах interval и действием action в виде строки"
+        for i,act in enumerate(self.idle_actions):
+            if name ==act[0]:
+                self.idle_actions[i]=[name,time.time(), interval,action]
+                break
+        else:
+            self.idle_actions.append([name,time.time(), interval,action])
+    def del_idle_action(self,name):
+        "Удаляет действие с именем name из цикла idle"
+        for i, (aname, lt, interv, action) in enumerate(self.idle_actions):
+            if name == aname:
+                del self.idle_actions[i]
+    def clear_idle_actions(self):
+        "Очищает цикл idle"
+        del self.idle_actions
+        self.idle_actions = []
     def idle(self):
         "Функция idle для окна"
-
         #command = self.reader_pipe.get()
         while(self.reader_pipe.poll()):
             command = self.reader_pipe.recv()
@@ -433,23 +449,9 @@ class UniversalViewer:
             if cur_time-last_time>=interval:
                 self.execute(action)
                 self.idle_actions[i][1] = time.time()
-    def add_idle_action(self, name, interval,action):
-        "Добавляет действие с именем name в цикл idle, с интервалом в секундах interval и действием action в виде строки"
-        for i,act in enumerate(self.idle_actions):
-            if name ==act[0]:
-                self.idle_actions[i]=[name,time.time(), interval,action]
-                break
-        else:
-            self.idle_actions.append([name,time.time(), interval,action])
-    def del_idle_action(self,name):
-        "Удаляет действие с именем name из цикла idle"
-        for i, (aname, lt, interv, action) in enumerate(self.idle_actions):
-            if name == aname:
-                del self.idle_actions[i]
-    def clear_idle_actions(self):
-        "Очищает цикл idle"
-        del self.idle_actions
-        self.idle_actions = []
+        if self.V._needs_update:
+            self.V.real_redraw()
+            self.V._needs_update=False
     def set_object(self, surf):
         "Устанавливает данне для отображения"
         self.Surf = surf
