@@ -443,10 +443,10 @@ int VolumeTemplate::get_ftype(){
 void VolumeTemplate::get_auto_box(float * bb_min, float * bb_max){
   bbox(bb_min, bb_max);
   //auto lab_steps = trans::storage_scales(UA->CG->get_steps());
-  for(int i=0; i<3; i++){
-    bb_min [i] -= 1.f;//float(lab_steps[i]);
-    bb_max [i] += 1.f;//float(lab_steps[i]);
-  }
+  //for(int i=0; i<3; i++){
+  //  bb_min [i] -= 1.f;//float(lab_steps[i]);
+  //  bb_max [i] += 1.f;//float(lab_steps[i]);
+  //}
 }
 void VolumeTemplate::attach_shader(ShaderProg * spr){
   //glBindVertexArray(VAO);
