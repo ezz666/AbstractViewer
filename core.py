@@ -5,6 +5,7 @@ import viewer
 int_array = viewer.int_array
 float_array = viewer.float_array
 checkOpenGLerror = viewer.checkOpenGLerror
+flushOpenGLerror = viewer.flushOpenGLerror
 Axis = viewer.Axis
 Texture = viewer.Texture
 FrameBuffer = viewer.FrameBuffer

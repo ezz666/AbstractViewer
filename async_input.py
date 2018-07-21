@@ -94,6 +94,9 @@ class rl_async_reader:
         elif command == "help":
             self.display_help(args)
         elif command == "exit":
+            self.lock.release()
+            self.pipe.send("quit()")
+            self.t.join()
             exit()
         else:
             pass
@@ -107,7 +110,7 @@ class rl_async_reader:
     def __call__(self, guifunc):
         self.pipe, child_conn = multiprocessing.Pipe(True)
         myguifunc = async_process(guifunc)
-        t = myguifunc(child_conn)
+        self.t = myguifunc(child_conn)
         self.update_completer(self.pipe.recv()[1])
         #print("Async input initialized")
         import sys,os,time,signal
@@ -140,5 +143,6 @@ class rl_async_reader:
                     raise e
         except (self.KillException, EOFError, KeyboardInterrupt):
             self.lock.release()
-            self.pipe.send("exit()")
+            self.pipe.send("quit()")
+            self.t.join()
             self.write_history()

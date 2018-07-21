@@ -36,6 +36,7 @@ class ShaderProg;
 // пока захардкодим, потом рефакторить будем)
 // Выделить в отдлеьную функцию определение scale из размера коробки
 void checkOpenGLerror();
+void flushOpenGLerror();
 const float pal[12] = {
     0.f, 0.f, 0.f,
     1.f, 0.f, 0.f,

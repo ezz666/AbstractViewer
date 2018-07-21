@@ -232,6 +232,8 @@ class PaletteWidget(Scene2DQT):
         self.shader_extern_load(*map(lambda x : os.path.join(path_to_AV,x), ["2dv.shader","2df.shader"]) )
         checkOpenGLerror()
         self.palettes = {}
+        checkOpenGLerror()
+        #print("widget init")
         #self.add_pal("pal", [1.,0.,0., 1.,.5,0., 1.,1.,0., 0.,1.,0., 0.,1.,1., 0.,0.,1., 1.,0.,1.])
         #self.add_pal("rgb", [1.,0.,0.,0.,1.,0.,0.,0.,1.])
     def toggle(self):
@@ -246,6 +248,7 @@ class PaletteWidget(Scene2DQT):
     def add_pal(self, name, pal_list):
         '''Добавляет палитру с именем name и цветами заданными в виде списка float со значениями от 0 до 1,
         они групируются по 3 формируя цвета, длина округляется до ближайшей снизу кратной 3'''
+        checkOpenGLerror()
         #print("adding pal {}".format(name))
         truncate3 = lambda x: x - x%3
         nlen = truncate3(len(pal_list))
@@ -255,12 +258,13 @@ class PaletteWidget(Scene2DQT):
         self.palettes[name] = Texture(pal, int(nlen/3))
     def set_pal(self, pal_name):
         "Устанавливает палитру"
+        checkOpenGLerror()
         #print("setting pal {}".format(pal_name))
+        self.MakeCurrent()
         self.tex = self.palettes[pal_name]
         self.cur_pal = pal_name
-        self.MakeCurrent()
         self.cbox.set_texture( self.palettes[self.cur_pal] )
-        self.plot()
+        self.cbox.load_on_device()
     def plot(self):
         #print("Cbox plot")
         self.MakeCurrent()
@@ -281,6 +285,7 @@ class PaletteWidget(Scene2DQT):
         self.spr.stop()
         self.SwapBuffers()
     def Draw(self):
+        checkOpenGLerror()
         #print("Cbox DRAW")
         self.MakeCurrent()
         self.automove()
@@ -341,11 +346,19 @@ class PaletteAdjuster(PaletteWidget):
         self._cur_spr = i
     def set_pal(self, pal_name):
         "Устанавливает палитру"
+        checkOpenGLerror()
+        #print("Adjuster set_pal start")
         PaletteWidget.set_pal(self, pal_name)
+        checkOpenGLerror()
+        #print("Adjuster set_pal end")
         self.MakeCurrent()
-        self.adjuster_widget.load_on_device()
+        #print("Adjuster pal load")
+        self.load_on_device()
+        checkOpenGLerror()
+        #print("Adjuster pal loaded")
         self.update()
     def display(self):
+        checkOpenGLerror()
         #print("Adjuster display")
         self.V.display()
         self.switch_spr(0)
@@ -359,6 +372,7 @@ class PaletteAdjuster(PaletteWidget):
         self.V.plot(self.spr)
         self.adjuster_widget.plot(self.spr)
         self.spr.stop()
+        checkOpenGLerror()
         self.SwapBuffers()
     def set_alpha(self, color_num, alpha):
         set_alpha__(self,color_num, alpha)
@@ -369,14 +383,19 @@ class PaletteAdjuster(PaletteWidget):
     def load_on_device(self):
         #print("Adjuster load on device")
         self.MakeCurrent()
+        #print("Loading pal")
         self.cbox.load_on_device()
+        checkOpenGLerror()
         #print("Loading line")
         self.adjuster_widget.load_on_device()
+        checkOpenGLerror()
         #print("Line loaded")
         #self.update()
         #print("widget updated")
     def plot(self):
-        #print("Adjuster plot")
+        flushOpenGLerror()
+        #print("Adjuster plot pal =", self.cur_pal)
+        #self.MakeCurrent()
         self.load_on_device()
     def OnLeftDown(self, evt):
         #scale = self.GetContentScaleFactor()

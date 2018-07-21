@@ -16,6 +16,11 @@ void checkOpenGLerror()
         std::cout << "OpenGl error! - " << gluErrorString(errCode)<<std::endl;
 }
 //--------------------------------------------------------------------------------
+void flushOpenGLerror(){
+    GLenum errCode;
+    if((errCode=glGetError()) != GL_NO_ERROR){}
+}
+//--------------------------------------------------------------------------------
 void Viewer3D::togglewire() {
     set_wire(!wire);
 }
@@ -161,6 +166,7 @@ void Viewer3D::GL_init(){
     //glEnable( GL_BLEND );
     //glBlendFunc(GL_ONE, GL_ONE);
     glewInit();
+    flushOpenGLerror();
     checkOpenGLerror();
 }
 //--------------------------------------------------------------------------------
@@ -441,6 +447,7 @@ void Viewer2D::GL_init(){
     //glDepthRange(-1.,1.);
     glShadeModel(GL_SMOOTH);
     glewInit();
+    flushOpenGLerror();
     checkOpenGLerror();
 }
 //--------------------------------------------------------------------------------
