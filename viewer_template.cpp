@@ -425,7 +425,7 @@ void Viewer2D::automove(){
 void Viewer2D::set_pos(float x, float y){
     pos = glm::vec2(x,y);
 }
-////--------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------
 void Viewer2D::get_pos(float* p){
     p[0] = pos.x;
     p[1] = pos.y;
@@ -441,7 +441,7 @@ glm::vec2 Viewer2D::get_vmax() const{
 //--------------------------------------------------------------------------------
 void Viewer2D::GL_init(){
     checkOpenGLerror();
-    glewExperimental=GL_TRUE;
+    //glewExperimental=GL_TRUE;
     //glEnable(GL_DEPTH_TEST);
     //glDepthFunc(GL_GREATER);
     //glDepthRange(-1.,1.);
