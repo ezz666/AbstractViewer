@@ -31,10 +31,10 @@ if (CMAKE_VERSION VERSION_GREATER "3.8")
 SWIG_ADD_LIBRARY(viewer
   TYPE MODULE
   LANGUAGE python
-  SOURCES viewer.i plottable.cpp shaderprog.cpp viewer_template.cpp
+  SOURCES viewer.i plottable.cpp shaderprog.cpp viewer_template.cpp calcable.cpp
 )
 else(CMAKE_VERSION VERSION_LESS "3.8")
-swig_add_module(viewer python viewer.i plottable.cpp shaderprog.cpp viewer_template.cpp) # DEPRECATED but may be useful for old versions
+swig_add_module(viewer python viewer.i plottable.cpp shaderprog.cpp viewer_template.cpp calcable.cpp) # DEPRECATED but may be useful for old versions
 endif(CMAKE_VERSION VERSION_GREATER "3.8")
 swig_link_libraries(viewer ${PYTHON_LIBRARIES} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES})
 configure_file(UniversalViewer.py ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
