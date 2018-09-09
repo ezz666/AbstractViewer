@@ -14,17 +14,19 @@ class Calcable {
     // so it's not necessary to count readers.
     std::unique_ptr<std::thread> calc_thread;
     int state;
-    std::mutex mtx;
+    mutable std::mutex mtx;
     std::unique_lock<std::mutex> lock();
     std::condition_variable cv;
   public:
     Calcable(): calc_thread(nullptr), state(0){}
     ~Calcable(){}
     int set_state_read();
+    static std::string state_as_string(int);
+    std::string state_as_string() const;
     void set_state_write();
     void set_state_sync_required();
     void set_state_synced();
     void try_join();
-    int get_state();
+    int get_state() const;
 };
 # endif // CALCABLE_HPP
