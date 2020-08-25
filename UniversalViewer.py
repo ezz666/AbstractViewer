@@ -629,7 +629,8 @@ class UniversalViewer:
         "Сохранять историю при внезапном закрытии терминала, служебная функция"
         self.exit()
     def update_completion(self,namespace):
-        self.reader_pipe.send(("update_completion",namespace))
+        strip_namespace = {k:None for k in namespace}
+        self.reader_pipe.send(("update_completion",strip_namespace))
     def __call__(self): # start main loop
         "Запускает mainloop"
         #glutSetWindowTitle(self.get_title())#self.exec(self.title_template.format(self.params)))

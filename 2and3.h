@@ -3,7 +3,7 @@
 #include "Python.h"
 #include "patchlevel.h"
 
-# if PY_MAJOR_VERSION==2
+# if PY_MAJOR_VERSION < 3
 PyObject* MyPyBytes_FromStringAndSize(const char *v, Py_ssize_t len){
   return PyString_FromStringAndSize(v, len);
 }
@@ -16,7 +16,7 @@ char* MyPyString_AsString(PyObject *string){
 PyObject* MyBytes_FromUnicode(PyObject * string){
   return string;
 }
-# elif PY_MAJOR_VERSION==3
+# else
 PyObject* MyPyBytes_FromStringAndSize(const char *v, Py_ssize_t len){
   return PyBytes_FromStringAndSize(v, len);
 }
