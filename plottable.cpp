@@ -1,4 +1,7 @@
 #include "plottable.hpp"
+#define POS 0
+#define CLR 1
+#define NRM 2
 //--------------------------------------------------------------------------------
 // Vertex array object (VAO)
 //--------------------------------------------------------------------------------
@@ -6,9 +9,9 @@ VertexArray::VertexArray(){
 	glGenVertexArrays(1, &AO);
 	glGenBuffers(1, &EBO);
 	this->bind();
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    this->release();
-    checkOpenGLerror();
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	this->release();
+	checkOpenGLerror();
 }
 //--------------------------------------------------------------------------------
 VertexArray::~VertexArray(){
@@ -23,7 +26,7 @@ void VertexArray::add_buffer(){
 	this->bind();
 	glGenBuffers(1, &BOs.back());
 	this->release();
-    checkOpenGLerror();
+	checkOpenGLerror();
 }
 //--------------------------------------------------------------------------------
 void VertexArray::bind(){
@@ -39,7 +42,7 @@ void VertexArray::load_data(int pos, int size, const void * data){
 	glBindBuffer(GL_ARRAY_BUFFER, BOs[pos]);
 	glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
 	this->release();
-    checkOpenGLerror();
+	checkOpenGLerror();
 }
 //--------------------------------------------------------------------------------
 GLuint & VertexArray::get_BO(int pos){
@@ -48,9 +51,9 @@ GLuint & VertexArray::get_BO(int pos){
 //--------------------------------------------------------------------------------
 void VertexArray::load_indices(int size, const void * data){
 	this->bind();
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, data, GL_STATIC_DRAW );
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, data, GL_STATIC_DRAW );
 	this->release();
-    checkOpenGLerror();
+	checkOpenGLerror();
 }
 //--------------------------------------------------------------------------------
 GLint & VertexArray::get_attr(int pos){
@@ -63,7 +66,7 @@ void VertexArray::enable_attr(int pos, int num, GLenum type){
 		glBindBuffer(GL_ARRAY_BUFFER, BOs[pos]);
 		glVertexAttribPointer(attrs[pos], num, type, GL_FALSE, 0, 0);
 	}
-    checkOpenGLerror();
+	checkOpenGLerror();
 }
 //------------------------------------------------------------------------------
 // Plottable

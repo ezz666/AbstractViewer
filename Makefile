@@ -1,6 +1,6 @@
 SHELL:=/bin/bash
-#PY_INCLUDE:=/usr/include/python2.7
-PY_INCLUDE:=/usr/include/python3.6m
+PY_INCLUDE:=/usr/include/python2.7
+#PY_INCLUDE:=/usr/include/python3.6m
 CXX:=g++
 modules:=plottable,shaderprog,viewer_template
 CXXOPT:=-fopenmp -O3 -fPIC -g -std=c++11 -DPYTHON -I$(PY_INCLUDE) # `wx-config-gtk3 --cxxflags` -Wall
