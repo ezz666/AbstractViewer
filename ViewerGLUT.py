@@ -29,13 +29,13 @@ class ViewerGLUT(UniversalViewer):
     def __init__(self, reader, rargv):
         UniversalViewer.__init__(self, reader)
         self.OnInit()
-        self.V = Scene3DGLUT(self.frame)#, glarglist)
+        self.V = Scene3DGLUT(self.Window)#, glarglist)
         UniversalViewer.InitGL(self)
-        self.frame.add(self.V)
+        self.Window.add(self.V)
         self.argv = rargv
     def OnInit(self):
-        frame = FrameGLUT()
-        self.frame = frame
+        Window = FrameGLUT()
+        self.Window = Window
     def add_pal(self, name, pal_list):
         '''Добавляет палитру с именем name и цветами заданными в виде списка float со значениями от 0 до 1,
         они групируются по 3 формируя цвета, длина округляется до ближайшей снизу кратной 3'''
@@ -76,7 +76,7 @@ class ViewerGLUT(UniversalViewer):
     #def OnTimer(self, evt):
     #    self.WakeUp()
     def SetWindowTitle(self, string):
-        self.frame.SetTitle(string)
+        self.Window.SetTitle(string)
     def reshape(self, width , height):
         self.V.MakeCurrent()
         self.V.reshape(width, height)
